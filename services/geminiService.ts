@@ -171,11 +171,12 @@ export const generateMeetingTakeaways = async (
       if (!items) return;
       items.forEach(item => {
         if (typeof item.timestamp === 'number') {
-          // If timestamp is beyond duration, or weirdly exactly at the end (common hallucination), remove it.
-          // We allow a small buffer (e.g. 5 seconds) before the end, but usually "Next Steps" aren't literally the last second.
-          if (item.timestamp >= duration - 1) {
-             delete item.timestamp;
-          }
+           // Clamp to duration if it exceeds it.
+           // We do NOT delete it anymore, as that makes items unclickable.
+           // We trust the prompt improvements to avoid "lazy end-of-meeting" defaults.
+           if (item.timestamp > duration) {
+             item.timestamp = duration;
+           }
         }
         if (item.items) {
           validateItems(item.items);
