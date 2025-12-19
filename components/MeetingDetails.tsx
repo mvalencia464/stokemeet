@@ -365,12 +365,41 @@ const MeetingDetails: React.FC<MeetingDetailsProps> = ({ meeting, onUpdate }) =>
                         {/* Fullscreen Header */}
                         <div className="flex items-center justify-between mb-6">
                           <h2 className="text-2xl font-bold text-zinc-900">AI Takeaways</h2>
-                          <button
-                            onClick={() => setIsFullscreen(false)}
-                            className="text-zinc-600 hover:text-zinc-900 p-2 hover:bg-zinc-100 rounded-lg transition-colors"
-                          >
-                            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                          </button>
+                          <div className="flex items-center gap-3">
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => {
+                                  navigator.clipboard.writeText(formatAllTakeaways());
+                                  alert('Copied to clipboard');
+                                }}
+                                className="text-xs font-medium text-zinc-600 hover:text-zinc-900 bg-white hover:bg-zinc-100 border border-zinc-200 px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-colors shadow-sm"
+                              >
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
+                                Copy
+                              </button>
+                              <button
+                                onClick={() => {
+                                  const blob = new Blob([formatAllTakeaways()], { type: 'text/plain' });
+                                  const url = URL.createObjectURL(blob);
+                                  const a = document.createElement('a');
+                                  a.href = url;
+                                  a.download = `meeting-notes-${meeting.id}.txt`;
+                                  a.click();
+                                }}
+                                className="text-xs font-medium text-zinc-600 hover:text-zinc-900 bg-white hover:bg-zinc-100 border border-zinc-200 px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-colors shadow-sm"
+                              >
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                                Download
+                              </button>
+                            </div>
+                            <div className="h-6 w-px bg-zinc-200 mx-1"></div>
+                            <button
+                              onClick={() => setIsFullscreen(false)}
+                              className="text-zinc-600 hover:text-zinc-900 p-2 hover:bg-zinc-100 rounded-lg transition-colors"
+                            >
+                              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                          </div>
                         </div>
 
                         {/* Meeting Purpose */}
