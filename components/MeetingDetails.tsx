@@ -411,27 +411,6 @@ const MeetingDetails: React.FC<MeetingDetailsProps> = ({ meeting, onUpdate }) =>
                 )}
               </div>
 
-              <div className="p-4 bg-white border-t border-zinc-100">
-                <div className="relative flex items-center">
-                  <input
-                    type="text"
-                    placeholder="Type your question..."
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleAskStokeMeet()}
-                    className="w-full pl-5 pr-32 py-4 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:bg-white transition-all shadow-sm placeholder:text-zinc-400"
-                  />
-                  <div className="absolute right-2 flex gap-2">
-                    <button
-                      onClick={handleAskStokeMeet}
-                      disabled={!chatInput.trim() || isChatLoading}
-                      className="px-4 py-2 bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 disabled:opacity-50 disabled:hover:bg-zinc-900 transition-all font-bold text-xs"
-                    >
-                      Send
-                    </button>
-                  </div>
-                </div>
-              </div>
             </div>
           )}
         </div>
