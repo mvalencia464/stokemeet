@@ -22,8 +22,8 @@ export const generateMeetingTakeaways = async (
     1. **EXTRACT TIMESTAMPS**: For EVERY SINGLE item (Key Takeaway, Topic Detail, Action Item), you MUST extract the most relevant timestamp from the transcript and include it in the JSON as 'timestamp' (in total seconds).
     2. **VALIDATE TIMESTAMPS**: 
        - All timestamps MUST be <= ${duration}. 
+       - **ABSOLUTE PROHIBITION**: Do NOT invent timestamps beyond the meeting duration (${duration}s).
        - If a specific timestamp is unclear for a "Next Step", use the timestamp of the discussion that led to it.
-       - DO NOT simply increment timestamps arbitrarily. If you cannot find a source, do not invent one > ${duration}.
     3. **DETAIL & PRECISION**: Capture specific numbers, dollar amounts, names, and technical specs. Avoid vague summaries.
     4. **STRICT HIERARCHY**: Follow the section structure below exactly.
 
@@ -160,7 +160,30 @@ export const generateMeetingTakeaways = async (
   });
 
   try {
-    return JSON.parse((response as any).text || '{}');
+    const parsed = JSON.parse((response as any).text || '{}');
+    
+    // Recursive validation to clamp timestamps
+    const validateItems = (items: any[]) => {
+      if (!items) return;
+      items.forEach(item => {
+        if (typeof item.timestamp === 'number') {
+          if (item.timestamp > duration) {
+            item.timestamp = duration;
+          }
+        }
+        if (item.items) {
+          validateItems(item.items);
+        }
+      });
+    };
+
+    if (parsed.takeaways) {
+      parsed.takeaways.forEach((section: any) => {
+        validateItems(section.items);
+      });
+    }
+
+    return parsed;
   } catch (e) {
     console.error("Failed to parse Gemini response", e);
     return { summary: "Analysis failed.", takeaways: [] };
