@@ -8,18 +8,24 @@ export const getGeminiClient = () => {
 
 export const generateMeetingTakeaways = async (
   transcript: string,
-  template: SummaryTemplate
+  template: SummaryTemplate,
+  duration: number
 ): Promise<{ summary: string; takeaways: TakeawaySection[] }> => {
   const ai = getGeminiClient();
 
   const prompt = `
     Analyze the following meeting transcript. The transcript contains [MM:SS] markers.
+    Total Meeting Duration: ${duration} seconds.
     Template Style: ${template}
     
     **CRITICAL OBJECTIVES**:
     1. **EXTRACT TIMESTAMPS**: For EVERY SINGLE item (Key Takeaway, Topic Detail, Action Item), you MUST extract the most relevant timestamp from the transcript and include it in the JSON as 'timestamp' (in total seconds).
-    2. **DETAIL & PRECISION**: Capture specific numbers, dollar amounts, names, and technical specs. Avoid vague summaries.
-    3. **STRICT HIERARCHY**: Follow the section structure below exactly.
+    2. **VALIDATE TIMESTAMPS**: 
+       - All timestamps MUST be <= ${duration}. 
+       - If a specific timestamp is unclear for a "Next Step", use the timestamp of the discussion that led to it.
+       - DO NOT simply increment timestamps arbitrarily. If you cannot find a source, do not invent one > ${duration}.
+    3. **DETAIL & PRECISION**: Capture specific numbers, dollar amounts, names, and technical specs. Avoid vague summaries.
+    4. **STRICT HIERARCHY**: Follow the section structure below exactly.
 
     **Structure:**
 

@@ -44,7 +44,7 @@ const MeetingDetails: React.FC<MeetingDetailsProps> = ({ meeting, onUpdate }) =>
   const handleAnalyze = async () => {
     setIsAnalyzing(true);
     try {
-      const result = await generateMeetingTakeaways(meeting.transcript, template);
+      const result = await generateMeetingTakeaways(meeting.transcript, template, meeting.duration);
       await onUpdate({
         ...meeting,
         summary: result.summary,
