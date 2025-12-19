@@ -24,6 +24,7 @@ const MeetingDetails: React.FC<MeetingDetailsProps> = ({ meeting, onUpdate }) =>
   const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'ai', text: string }[]>([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
   const [mediaUrl, setMediaUrl] = useState<string | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     const data = meeting.videoData || meeting.audioData;
@@ -291,7 +292,7 @@ const MeetingDetails: React.FC<MeetingDetailsProps> = ({ meeting, onUpdate }) =>
               ) : (
                 <div className="flex flex-col gap-6">
                   {/* Actions Toolbar */}
-                  <div className="flex items-center justify-end mb-4">
+                  <div className="flex items-center justify-between mb-4">
                     <div className="flex gap-2">
                       <button
                         onClick={() => {
@@ -318,6 +319,13 @@ const MeetingDetails: React.FC<MeetingDetailsProps> = ({ meeting, onUpdate }) =>
                         Download
                       </button>
                     </div>
+                    <button
+                      onClick={() => setIsFullscreen(true)}
+                      className="text-xs font-medium text-zinc-600 hover:text-zinc-900 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-colors"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 4l-5-5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>
+                      Fullscreen
+                    </button>
                   </div>
 
                   {/* Dynamic Sections - Masonry Layout */}
@@ -348,7 +356,57 @@ const MeetingDetails: React.FC<MeetingDetailsProps> = ({ meeting, onUpdate }) =>
                         </section>
                       );
                     })}
-                  </div></div>
+                  </div>
+
+                  {/* Fullscreen Overlay */}
+                  {isFullscreen && (
+                    <div className="fixed inset-0 bg-zinc-50 z-50 overflow-y-auto">
+                      <div className="max-w-7xl mx-auto p-8">
+                        {/* Fullscreen Header */}
+                        <div className="flex items-center justify-between mb-6">
+                          <h2 className="text-2xl font-bold text-zinc-900">AI Takeaways</h2>
+                          <button
+                            onClick={() => setIsFullscreen(false)}
+                            className="text-zinc-600 hover:text-zinc-900 p-2 hover:bg-zinc-100 rounded-lg transition-colors"
+                          >
+                            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                          </button>
+                        </div>
+
+                        {/* Meeting Purpose */}
+                        <section className="mb-6">
+                          <h3 className="text-sm font-bold text-zinc-900 mb-2 tracking-tight uppercase">Meeting Purpose</h3>
+                          <div className="bg-white p-4 rounded-xl shadow-sm border border-zinc-200/60">
+                            <p className="text-zinc-700 leading-relaxed text-[15px]">{meeting.summary}</p>
+                          </div>
+                        </section>
+
+                        {/* Sections in 3 columns */}
+                        <div className="columns-1 lg:columns-3 gap-6 space-y-6">
+                          {meeting.takeaways?.map((section, idx) => {
+                            const cleanTitle = section.title.replace(/^[IVX]+\.\s*/, '');
+                            const isDecisions = cleanTitle.toLowerCase().includes('decisions');
+
+                            return (
+                              <section key={idx} className="break-inside-avoid mb-6">
+                                <h3 className={`text-base font-extrabold mb-3 tracking-tight ${isDecisions ? 'text-emerald-600' : 'text-zinc-900'} flex items-center gap-2 uppercase`}>
+                                  {isDecisions && (
+                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                  )}
+                                  {cleanTitle}
+                                </h3>
+                                <div className="bg-white rounded-xl shadow-sm border border-zinc-200/60 overflow-hidden">
+                                  {section.items.map((item, i) => (
+                                    <TakeawayItemRenderer key={i} item={item} sectionType={section.type} isRoot={true} />
+                                  ))}
+                                </div>
+                              </section>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )}</div>
               )}
             </div>
           ) : activeTab === 'transcript' ? (
