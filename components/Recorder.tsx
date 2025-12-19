@@ -61,9 +61,13 @@ const Recorder: React.FC<RecorderProps> = ({ onSave, isGlobalRecording, setIsGlo
       if (isScreenCaptureEnabled) {
         try {
           const displayStream = await navigator.mediaDevices.getDisplayMedia({
-            video: { cursor: "always" } as any,
-            audio: true
-          });
+            video: {
+              cursor: "always",
+              displaySurface: "monitor"
+            } as any,
+            audio: true,
+            systemAudio: "include"
+          } as any);
           displayStreamRef.current = displayStream;
           actuallyCapturingScreen = true;
 

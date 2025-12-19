@@ -226,8 +226,8 @@ const MeetingDetails: React.FC<MeetingDetailsProps> = ({ meeting, onUpdate }) =>
                 key={tab}
                 onClick={() => setActiveTab(tab as any)}
                 className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${activeTab === tab
-                    ? 'bg-white text-zinc-900 shadow-sm ring-1 ring-zinc-900/5'
-                    : 'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-200/50'
+                  ? 'bg-white text-zinc-900 shadow-sm ring-1 ring-zinc-900/5'
+                  : 'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-200/50'
                   }`}
               >
                 {tab === 'summary' ? 'AI Takeaways' : tab === 'transcript' ? 'Full Transcript' : 'Ask AI'}
@@ -347,14 +347,8 @@ const MeetingDetails: React.FC<MeetingDetailsProps> = ({ meeting, onUpdate }) =>
             </div>
           ) : (
             <div className="bg-white rounded-[2rem] shadow-sm border border-zinc-200 overflow-hidden flex flex-col h-[650px] animate-in fade-in zoom-in-50 duration-300">
-              <div className="p-6 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/50">
-                <div>
-                  <h3 className="text-base font-bold text-zinc-900">Ask StokeMeet</h3>
-                  <p className="text-xs text-zinc-500 flex items-center gap-1.5 mt-1">
-                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
-                    Gemini 2.0 Flash Active
-                  </p>
-                </div>
+              <div className="flex items-center justify-between p-4 border-b border-zinc-100 bg-white">
+                <h3 className="font-bold text-zinc-800">Ask StokeMeet</h3>
                 <div className="flex gap-2">
                   <button
                     onClick={() => {
@@ -399,8 +393,8 @@ const MeetingDetails: React.FC<MeetingDetailsProps> = ({ meeting, onUpdate }) =>
                 {chatMessages.map((msg, i) => (
                   <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-2 fade-in duration-300`}>
                     <div className={`max-w-[85%] px-5 py-3.5 rounded-2xl text-[15px] leading-relaxed shadow-sm ${msg.role === 'user'
-                        ? 'bg-zinc-900 text-white rounded-br-none'
-                        : 'bg-zinc-50 border border-zinc-100 text-zinc-800 rounded-bl-none'
+                      ? 'bg-zinc-900 text-white rounded-br-none'
+                      : 'bg-zinc-50 border border-zinc-100 text-zinc-800 rounded-bl-none'
                       }`}>
                       {msg.text}
                     </div>
