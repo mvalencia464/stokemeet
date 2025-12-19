@@ -101,6 +101,27 @@ const MeetingDetails: React.FC<MeetingDetailsProps> = ({ meeting, onUpdate }) =>
     URL.revokeObjectURL(url);
   };
 
+  // Recursive formatter for takeaways (includes all nested items)
+  const formatTakeawaysRecursive = (items: TakeawayItem[], indent = 0): string => {
+    return items.map(item => {
+      const prefix = '  '.repeat(indent) + '- ';
+      let result = prefix + item.text;
+      if (item.items && item.items.length > 0) {
+        result += '\n' + formatTakeawaysRecursive(item.items, indent + 1);
+      }
+      return result;
+    }).join('\n');
+  };
+
+  const formatAllTakeaways = (): string => {
+    let result = meeting.summary + '\n\n';
+    meeting.takeaways?.forEach(section => {
+      result += section.title + '\n';
+      result += formatTakeawaysRecursive(section.items, 0) + '\n\n';
+    });
+    return result;
+  };
+
   const handleDownloadMedia = () => {
     if (!mediaUrl) return;
     const a = document.createElement('a');
@@ -274,8 +295,7 @@ const MeetingDetails: React.FC<MeetingDetailsProps> = ({ meeting, onUpdate }) =>
                     <div className="flex gap-2">
                       <button
                         onClick={() => {
-                          const text = meeting.takeaways?.map(s => `${s.title}\n${s.items.map(i => `- ${i.text}`).join('\n')}`).join('\n\n');
-                          navigator.clipboard.writeText(meeting.summary + '\n\n' + text);
+                          navigator.clipboard.writeText(formatAllTakeaways());
                           alert('Copied to clipboard');
                         }}
                         className="text-xs font-medium text-zinc-600 hover:text-zinc-900 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-colors"
@@ -285,7 +305,7 @@ const MeetingDetails: React.FC<MeetingDetailsProps> = ({ meeting, onUpdate }) =>
                       </button>
                       <button
                         onClick={() => {
-                          const blob = new Blob([meeting.summary + '\n\n' + meeting.takeaways?.map(s => `${s.title}\n${s.items.map(i => `- ${i.text}`).join('\n')}`).join('\n\n')], { type: 'text/plain' });
+                          const blob = new Blob([formatAllTakeaways()], { type: 'text/plain' });
                           const url = URL.createObjectURL(blob);
                           const a = document.createElement('a');
                           a.href = url;
