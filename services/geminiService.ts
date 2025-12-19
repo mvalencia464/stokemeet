@@ -25,6 +25,7 @@ export const generateMeetingTakeaways = async (
        - **ABSOLUTE PROHIBITION**: Do NOT invent timestamps beyond the meeting duration (${duration}s).
     3. **NEXT STEPS PRECISION**:
        - **DO NOT** default Action Item timestamps to the end of the meeting.
+       - **NEGATIVE CONSTRAINT**: Never set a Next Step timestamp to the very last second of the transcript unless it was literally said then.
        - You MUST trace the action item back to the specific moment in the *dialogue* where it was discussed, assigned, or agreed upon.
        - If a task is a summary of a 5-minute discussion, use the *start* of that discussion.
     4. **DETAIL & PRECISION**: Capture specific numbers, dollar amounts, names, and technical specs. Avoid vague summaries.
@@ -170,8 +171,10 @@ export const generateMeetingTakeaways = async (
       if (!items) return;
       items.forEach(item => {
         if (typeof item.timestamp === 'number') {
-          if (item.timestamp > duration) {
-            item.timestamp = duration;
+          // If timestamp is beyond duration, or weirdly exactly at the end (common hallucination), remove it.
+          // We allow a small buffer (e.g. 5 seconds) before the end, but usually "Next Steps" aren't literally the last second.
+          if (item.timestamp >= duration - 1) {
+             delete item.timestamp;
           }
         }
         if (item.items) {
