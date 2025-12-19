@@ -23,10 +23,12 @@ export const generateMeetingTakeaways = async (
     2. **VALIDATE TIMESTAMPS**: 
        - All timestamps MUST be <= ${duration}. 
        - **ABSOLUTE PROHIBITION**: Do NOT invent timestamps beyond the meeting duration (${duration}s).
-    3. **NEXT STEPS PRECISION**:
-       - **DO NOT** default Action Item timestamps to the end of the meeting.
+    3. **NEXT STEPS PRECISION (CRITICAL)**:
+       - **PROBLEM**: We are seeing all next steps defaulting to the end of the video. THIS IS WRONG.
+       - **SOLUTION**: You must find the *exact* [MM:SS] marker where the task was discussed.
+       - **LOCATE**: Look for phrases like "I'll take care of...", "Can you...", "Action item for...", "Let's...".
+       - **ASSIGNMENT**: If a task is assigned to a person, find the timestamp where that person speaks about it or is asked to do it.
        - **NEGATIVE CONSTRAINT**: Never set a Next Step timestamp to the very last second of the transcript unless it was literally said then.
-       - You MUST trace the action item back to the specific moment in the *dialogue* where it was discussed, assigned, or agreed upon.
        - If a task is a summary of a 5-minute discussion, use the *start* of that discussion.
     4. **DETAIL & PRECISION**: Capture specific numbers, dollar amounts, names, and technical specs. Avoid vague summaries.
     5. **STRICT HIERARCHY**: Follow the section structure below exactly.
