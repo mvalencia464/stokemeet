@@ -1,6 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Meeting, SummaryTemplate } from '../types';
+import { Meeting, SummaryTemplate, TakeawayItem } from '../types';
 import { generateMeetingTakeaways, askStokeMeet } from '../services/geminiService';
+
+// Utility function for formatting duration
+const formatDuration = (seconds: number) => {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+};
 
 interface MeetingDetailsProps {
   meeting: Meeting;
@@ -50,6 +57,15 @@ const MeetingDetails: React.FC<MeetingDetailsProps> = ({ meeting, onUpdate }) =>
     }
   };
 
+  // Listen for custom seek events from nested components
+  useEffect(() => {
+    const handleSeek = (e: CustomEvent<number>) => {
+      seekTo(e.detail);
+    };
+    document.addEventListener('seekTo', handleSeek as EventListener);
+    return () => document.removeEventListener('seekTo', handleSeek as EventListener);
+  }, []);
+
   const seekTo = (seconds: number) => {
     if (meeting.videoData && videoRef.current) {
       videoRef.current.currentTime = seconds;
@@ -57,15 +73,11 @@ const MeetingDetails: React.FC<MeetingDetailsProps> = ({ meeting, onUpdate }) =>
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (meeting.audioData && audioRef.current) {
       audioRef.current.currentTime = seconds;
-      audioRef.current.play().catch(console.error);
+      if (audioRef.current.paused) { // Added this check based on the instruction's intent
+        audioRef.current.play().catch(console.error);
+      }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  };
-
-  const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   const formatItemTime = (seconds?: number) => {
@@ -240,7 +252,7 @@ const MeetingDetails: React.FC<MeetingDetailsProps> = ({ meeting, onUpdate }) =>
       <div className="flex-1 overflow-y-auto p-8">
         <div className="max-w-4xl mx-auto">
           {activeTab === 'summary' ? (
-            <div className="space-y-8 pb-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="space-y-6 pb-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
               {!meeting.summary ? (
                 <div className="bg-zinc-50 border border-zinc-200 rounded-3xl p-16 text-center shadow-sm">
                   <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-zinc-900 shadow-sm border border-zinc-100 mx-auto mb-6">
@@ -256,50 +268,67 @@ const MeetingDetails: React.FC<MeetingDetailsProps> = ({ meeting, onUpdate }) =>
                   </button>
                 </div>
               ) : (
-                <>
-                  <section className="bg-white p-8 rounded-3xl shadow-sm border border-zinc-100">
-                    <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-4">Executive Summary</h3>
-                    <p className="text-lg text-zinc-700 leading-8 font-medium">{meeting.summary}</p>
-                  </section>
-
-                  <div className="grid grid-cols-1 gap-6">
-                    {meeting.takeaways?.map((section, idx) => (
-                      <section key={idx} className="bg-white p-8 rounded-3xl shadow-sm border border-zinc-100 flex flex-col">
-                        <h4 className="text-lg font-bold text-zinc-900 mb-6 flex items-center gap-3">
-                          <span className="w-2 h-2 rounded-full bg-zinc-900"></span>
-                          {section.title}
-                        </h4>
-                        <div className="space-y-4">
-                          {section.items.map((item, i) => (
-                            <div
-                              key={i}
-                              className={`flex items-start gap-4 group ${item.timestamp !== undefined ? 'cursor-pointer hover:bg-zinc-50 rounded-xl p-3 -m-3 transition-colors' : ''}`}
-                              onClick={() => item.timestamp !== undefined && seekTo(item.timestamp)}
-                            >
-                              <div className="mt-1 shrink-0">
-                                {section.type === 'checklist' ? (
-                                  <input type="checkbox" readOnly className="w-4 h-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900" />
-                                ) : (
-                                  <div className="w-1.5 h-1.5 rounded-full bg-zinc-300 mt-2"></div>
-                                )}
-                              </div>
-                              <div className="flex-1">
-                                <p className="text-zinc-700 leading-relaxed text-[15px]">
-                                  {item.text}
-                                  {item.timestamp !== undefined && (
-                                    <span className="ml-2 text-zinc-400 font-mono text-xs opacity-0 group-hover:opacity-100 transition-opacity">
-                                      {formatDuration(item.timestamp)}
-                                    </span>
-                                  )}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </section>
-                    ))}
+                <div className="flex flex-col gap-6">
+                  {/* Actions Toolbar */}
+                  <div className="flex items-center justify-end mb-4">
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          const text = meeting.takeaways?.map(s => `${s.title}\n${s.items.map(i => `- ${i.text}`).join('\n')}`).join('\n\n');
+                          navigator.clipboard.writeText(meeting.summary + '\n\n' + text);
+                          alert('Copied to clipboard');
+                        }}
+                        className="text-xs font-medium text-zinc-600 hover:text-zinc-900 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-colors"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
+                        Copy
+                      </button>
+                      <button
+                        onClick={() => {
+                          const blob = new Blob([meeting.summary + '\n\n' + meeting.takeaways?.map(s => `${s.title}\n${s.items.map(i => `- ${i.text}`).join('\n')}`).join('\n\n')], { type: 'text/plain' });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `meeting-notes-${meeting.id}.txt`;
+                          a.click();
+                        }}
+                        className="text-xs font-medium text-zinc-600 hover:text-zinc-900 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-colors"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                        Download
+                      </button>
+                    </div>
                   </div>
-                </>
+
+                  {/* Dynamic Sections - Masonry Layout */}
+                  <div className="columns-1 md:columns-2 gap-6 space-y-6">
+                    {meeting.takeaways?.map((section, idx) => {
+                      const cleanTitle = section.title.replace(/^[IVX]+\.\s*/, '');
+                      const isNextSteps = cleanTitle.toLowerCase().includes('next steps');
+                      const isDecisions = cleanTitle.toLowerCase().includes('decisions');
+
+                      return (
+                        <section
+                          key={idx}
+                          className="break-inside-avoid mb-6"
+                        >
+                          <h3 className={`text-base font-extrabold mb-3 tracking-tight ${isDecisions ? 'text-emerald-600' : 'text-zinc-900'} flex items-center gap-2 uppercase`}>
+                            {isDecisions && (
+                              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                            )}
+                            {cleanTitle}
+                          </h3>
+
+                          <div className={`bg-white rounded-xl shadow-sm border border-zinc-200/60 overflow-hidden`}>
+                            {/* Recursive Item Renderer */}
+                            {section.items.map((item, i) => (
+                              <TakeawayItemRenderer key={i} item={item} sectionType={section.type} isRoot={true} />
+                            ))}
+                          </div>
+                        </section>
+                      );
+                    })}
+                  </div></div>
               )}
             </div>
           ) : activeTab === 'transcript' ? (
@@ -440,6 +469,98 @@ const MeetingDetails: React.FC<MeetingDetailsProps> = ({ meeting, onUpdate }) =>
 
             </div>
           )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Recursive Component for Takeaway Items
+const TakeawayItemRenderer = ({ item, sectionType, isRoot = false, depth = 0 }: { item: TakeawayItem, sectionType: 'bullets' | 'checklist', isRoot?: boolean, depth?: number }) => {
+  const isOwnerHeader = sectionType === 'checklist' && item.items && item.items.length > 0 && depth === 0;
+
+  // Parse text for "Label: Description" format
+  const parseText = (text: string) => {
+    const colonIndex = text.indexOf(':');
+    if (colonIndex > 0 && colonIndex < 100) { // Ensure colon is reasonably placed (not too far in)
+      const label = text.substring(0, colonIndex).trim();
+      const description = text.substring(colonIndex + 1).trim();
+      return { label, description };
+    }
+    return { label: null, description: text };
+  };
+
+  const { label, description } = parseText(item.text);
+
+  return (
+    <div className={`group ${isRoot ? 'border-b border-zinc-50 last:border-0' : ''} ${depth > 0 ? 'mt-1' : ''}`}>
+      <div className={`${isRoot ? 'p-3' : 'py-0.5'}`}>
+        <div className="flex items-start gap-3">
+          {/* Visual Marker (Bullet/Checkbox/Avatar) */}
+          <div className={`shrink-0 ${isRoot ? 'mt-1.5' : 'mt-1.5'}`}>
+            {sectionType === 'checklist' ? (
+              isOwnerHeader ? (
+                <div className="w-6 h-6 rounded-lg bg-zinc-100 flex items-center justify-center text-[10px] font-bold text-zinc-600 -mt-1 ml-1 mb-1">
+                  {item.text.charAt(0).toUpperCase()}
+                </div>
+              ) : (
+                <input type="checkbox" readOnly className="w-3.5 h-3.5 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900" />
+              )
+            ) : (
+              // Bullets
+              depth === 0 ? (
+                <div className="w-1.5 h-1.5 rounded-full bg-zinc-400 mt-1"></div>
+              ) : (
+                <div className="w-1 h-1 rounded-full bg-zinc-300 mt-1.5 ml-0.5"></div>
+              )
+            )}
+          </div>
+
+          <div className="flex-1 min-w-0">
+            {/* Content */}
+            <div
+              className={`flex items-baseline gap-2 ${item.timestamp !== undefined ? 'cursor-pointer hover:text-blue-600 transition-colors' : ''}`}
+              onClick={() => {
+                if (item.timestamp !== undefined) {
+                  // Dispatch event or call global seek (requires context or prop drilling, but sticking to prop drilling is hard here without refactoring.
+                  // For now, assuming seekTo is not easily available in this isolated component without passing it down.
+                  // Quick fix: Dispatch a custom event or use a simple hack if seekTo isn't passed.
+                  // Actually, 'seekTo' is in the parent. I should define this component INSIDE MeetingDetails or pass seekTo.
+                  // Passing seekTo is better.
+                  document.dispatchEvent(new CustomEvent('seekTo', { detail: item.timestamp }));
+                }
+              }}
+            >
+              <p className={`
+                    ${isOwnerHeader ? 'font-bold text-zinc-900 text-[15px]' : ''}
+                    ${!isOwnerHeader && depth === 0 ? 'font-medium text-zinc-800 text-[14.5px]' : ''}
+                    ${depth > 0 ? 'text-zinc-600 text-[13.5px]' : ''}
+                    leading-snug
+                 `}>
+                {label ? (
+                  <>
+                    <span className="font-bold">{label}:</span> {description}
+                  </>
+                ) : (
+                  item.text
+                )}
+              </p>
+              {item.timestamp !== undefined && (
+                <span className="text-[10px] font-medium text-zinc-400 bg-zinc-100 px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity font-mono shrink-0">
+                  {formatDuration(item.timestamp)}
+                </span>
+              )}
+            </div>
+
+            {/* Recursive Children */}
+            {item.items && item.items.length > 0 && (
+              <div className={`mt-1 ${sectionType === 'checklist' ? 'ml-1' : 'pl-4 border-l border-zinc-100'}`}>
+                {item.items.map((subItem, idx) => (
+                  <TakeawayItemRenderer key={idx} item={subItem} sectionType={sectionType} isRoot={false} depth={depth + 1} />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -2,6 +2,7 @@
 export interface TakeawayItem {
   text: string;
   timestamp?: number; // in seconds
+  items?: TakeawayItem[];
 }
 
 export interface TakeawaySection {
