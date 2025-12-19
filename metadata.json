@@ -1,0 +1,9 @@
+
+{
+  "name": "Gemini Scribe - AI Meeting Notetaker",
+  "description": "Real-time meeting recorder and intelligence platform powered by Gemini 3.0 Flash. Capture transcripts and generate custom takeaways, action items, and executive summaries.",
+  "requestFramePermissions": [
+    "microphone",
+    "camera"
+  ]
+}
