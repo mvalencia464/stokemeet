@@ -23,9 +23,12 @@ export const generateMeetingTakeaways = async (
     2. **VALIDATE TIMESTAMPS**: 
        - All timestamps MUST be <= ${duration}. 
        - **ABSOLUTE PROHIBITION**: Do NOT invent timestamps beyond the meeting duration (${duration}s).
-       - If a specific timestamp is unclear for a "Next Step", use the timestamp of the discussion that led to it.
-    3. **DETAIL & PRECISION**: Capture specific numbers, dollar amounts, names, and technical specs. Avoid vague summaries.
-    4. **STRICT HIERARCHY**: Follow the section structure below exactly.
+    3. **NEXT STEPS PRECISION**:
+       - **DO NOT** default Action Item timestamps to the end of the meeting.
+       - You MUST trace the action item back to the specific moment in the *dialogue* where it was discussed, assigned, or agreed upon.
+       - If a task is a summary of a 5-minute discussion, use the *start* of that discussion.
+    4. **DETAIL & PRECISION**: Capture specific numbers, dollar amounts, names, and technical specs. Avoid vague summaries.
+    5. **STRICT HIERARCHY**: Follow the section structure below exactly.
 
     **Structure:**
 
