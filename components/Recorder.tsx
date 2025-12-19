@@ -255,13 +255,6 @@ const Recorder: React.FC<RecorderProps> = ({ onSave, isGlobalRecording, setIsGlo
               </div>
             </label>
 
-            <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-4 text-xs text-zinc-600 flex items-start gap-3 leading-relaxed">
-              <svg className="w-4 h-4 text-zinc-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              <div>
-                <p className="font-bold mb-1 text-zinc-900">Recording Google Meet?</p>
-                <p>Select <span className="font-semibold text-zinc-900">Chrome Tab</span> → <span className="font-semibold text-zinc-900">Google Meet</span> and enable <span className="font-semibold text-zinc-900">Also share tab audio</span>.</p>
-              </div>
-            </div>
           </div>
 
           <button
