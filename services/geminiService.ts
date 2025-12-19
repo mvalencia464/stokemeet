@@ -16,77 +16,76 @@ export const generateMeetingTakeaways = async (
     Analyze the following meeting transcript. The transcript contains [MM:SS] markers.
     Template Style: ${template}
     
-    Structure the output strictly following this hierarchy:
+    **CRITICAL OBJECTIVES**:
+    1. **EXTRACT TIMESTAMPS**: For EVERY SINGLE item (Key Takeaway, Topic Detail, Action Item), you MUST extract the most relevant timestamp from the transcript and include it in the JSON as `timestamp` (in total seconds).
+    2. **DETAIL & PRECISION**: Capture specific numbers, dollar amounts, names, and technical specs. Avoid vague summaries.
+    3. **STRICT HIERARCHY**: Follow the section structure below exactly.
 
-    I. **Meeting Purpose**
-       - Primary Objective: A clear, definitive statement of why the meeting occurred. (Map this to the 'summary' field).
+    **Structure:**
+
+    I. **Meeting Purpose** (Map to 'summary')
+       - A clear, definitive statement of why the meeting occurred.
 
     II. **Key Takeaways**
        - High-level critical points.
-       - **CRITICAL FORMAT**: Every item MUST follow "Label: Description" pattern.
-       - Label = 2-5 words that summarize the point (will be bolded in UI).
-       - Example: "Sales Campaign: Launching a campaign to revive ~445 pending proposals with a 4-12% discount..."
+       - **FORMAT**: "Label: Description" (e.g. "Sales Campaign: Launching a campaign...")
+       - **TIMESTAMP**: Required.
 
     III. **Topics & Discussions**
-       - Break down into logical sub-categories (A, B, C...).
-       - **CRITICAL FORMAT**: Each detailed item MUST follow "Label: Description" pattern.
-       - Support 3 LEVELS OF DEPTH:
-         - Level 1: Main Topic (e.g. "A. Client & Team Issues")
-         - Level 2: Specific Issue with Label format (e.g. "Demo Material Error: $1,000-$1,100 in new material...")
-         - Level 3: Details/Resolution with Label format (e.g. "Resolution: Provide new material by EOW")
+       - Break down into logical sub-categories.
+       - **DEPTH**: Use 3 levels of nesting:
+         - Level 1: Main Topic (e.g. "A. Client Issues") - *Timestamp optional*
+         - Level 2: Specific Issue (e.g. "Demo Material: $1k lost...") - **TIMESTAMP REQUIRED**
+         - Level 3: Resolution/Details (e.g. "Action: Re-print by Friday") - **TIMESTAMP REQUIRED**
 
     IV. **Next Steps**
-       - **CRITICAL JSON STRUCTURE**: 
-         - Section title = "IV. Next Steps" (DO NOT include person names in title)
-         - Each person is a SEPARATE ITEM with text = person's name
-         - That person's tasks are nested in the "items" array of that person
-       - **EXAMPLE JSON**:
-         {
-           "title": "IV. Next Steps",
-           "type": "checklist",
-           "items": [
-             {
-               "text": "Mauricio",
-               "items": [
-                 { "text": "Export pending proposals to Google Sheets." },
-                 { "text": "Create How-To video for AI vetting tool." }
-               ]
-             },
-             {
-               "text": "Andrew",
-               "items": [
-                 { "text": "Clear 'Waiting on Andrew' list by EOW." },
-                 { "text": "Initiate client outreach." }
-               ]
-             }
-           ]
-         }
+       - **TYPE**: Must be "checklist".
+       - **STRUCTURE**: 
+         - Top Level: Person's Name (e.g. "Mauricio")
+         - Nested Items: The specific Action Items/Tasks (e.g. "Export list").
+       - **TIMESTAMP**: Required for the specific tasks.
 
-    **Example Output**:
-    "
-    I. Meeting Purpose
-    Primary Objective: To strategize a sales campaign...
+    **Example Output JSON Structure**:
+    {
+      "summary": "...",
+      "takeaways": [
+        {
+          "title": "II. Key Takeaways",
+          "type": "bullets",
+          "items": [
+            { "text": "Label: Content...", "timestamp": 65 }
+          ]
+        },
+        {
+          "title": "III. Topics & Discussions",
+          "type": "bullets",
+          "items": [
+            {
+              "text": "A. Main Topic",
+              "items": [
+                 { 
+                   "text": "Issue: Description...", "timestamp": 120,
+                   "items": [ { "text": "Resolution: ...", "timestamp": 140 } ]
+                 }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "IV. Next Steps",
+          "type": "checklist",
+          "items": [
+            {
+              "text": "Mauricio",
+              "items": [
+                { "text": "Task 1...", "timestamp": 200 }
+              ]
+            }
+          ]
+        }
+      ]
+    }
 
-    II. Key Takeaways
-    Sales Campaign: Launching a campaign to revive ~445 pending proposals with a 4-12% discount (defaulting to 7%) and a Dec 20 expiration.
-    AI-Assisted Vetting: Mauricio will build an AI tool to help Jordan vet proposals for profitability before sending.
-    
-    III. Topics & Discussions
-    A. Client & Team Issues
-    Demo Material Error: $1,000-$1,100 in new material to be provided after demo material was accidentally discarded.
-    Permit Runner Conflict: Decided to automate the role after current runner expressed dissatisfaction despite ~$160/hr rate.
-    
-    IV. Next Steps
-    Mauricio
-    [ ] Export pending proposals to Google Sheets.
-    [ ] Create How-To video for AI vetting tool.
-    Andrew
-    [ ] Clear 'Waiting on Andrew' list by EOW.
-    "
-
-    Constraint: Be very detailed. Capture specific numbers, names, and technical details.
-    For timestamps: extract the most relevant [MM:SS] and convert to seconds.
-    
     Format as JSON matching the schema.
     
     Transcript:
@@ -118,12 +117,24 @@ export const generateMeetingTakeaways = async (
                       timestamp: { type: Type.NUMBER, description: "Seconds from start" },
                       items: {
                         type: Type.ARRAY,
-                        description: "Nested items (e.g. tasks for a person, or details for a topic)",
+                        description: "Nested Level 2 items",
                         items: {
                           type: Type.OBJECT,
                           properties: {
                             text: { type: Type.STRING },
-                            timestamp: { type: Type.NUMBER }
+                            timestamp: { type: Type.NUMBER },
+                            items: {
+                                type: Type.ARRAY,
+                                description: "Nested Level 3 items",
+                                items: {
+                                    type: Type.OBJECT,
+                                    properties: {
+                                        text: { type: Type.STRING },
+                                        timestamp: { type: Type.NUMBER }
+                                    },
+                                    required: ["text"]
+                                }
+                            }
                           },
                           required: ["text"]
                         }
