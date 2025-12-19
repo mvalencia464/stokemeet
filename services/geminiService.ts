@@ -17,7 +17,7 @@ export const generateMeetingTakeaways = async (
     Template Style: ${template}
     
     **CRITICAL OBJECTIVES**:
-    1. **EXTRACT TIMESTAMPS**: For EVERY SINGLE item (Key Takeaway, Topic Detail, Action Item), you MUST extract the most relevant timestamp from the transcript and include it in the JSON as `timestamp` (in total seconds).
+    1. **EXTRACT TIMESTAMPS**: For EVERY SINGLE item (Key Takeaway, Topic Detail, Action Item), you MUST extract the most relevant timestamp from the transcript and include it in the JSON as 'timestamp' (in total seconds).
     2. **DETAIL & PRECISION**: Capture specific numbers, dollar amounts, names, and technical specs. Avoid vague summaries.
     3. **STRICT HIERARCHY**: Follow the section structure below exactly.
 
