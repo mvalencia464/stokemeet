@@ -384,7 +384,7 @@ const MeetingDetails: React.FC<MeetingDetailsProps> = ({ meeting, onUpdate }) =>
                 <div className="relative flex items-center">
                   <input
                     ref={(el) => {
-                      if (el && activeTab === 'ask-ai') {
+                      if (el && activeTab === 'chat') {
                         setTimeout(() => el.focus(), 50);
                       }
                     }}
