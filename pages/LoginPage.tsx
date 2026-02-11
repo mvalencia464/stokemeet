@@ -10,13 +10,32 @@ export const LoginPage: React.FC = () => {
   if (user) return <Navigate to="/" replace />;
 
   return (
-    <div className="min-h-screen bg-[#0d1117] flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-md bg-[#161b22] border border-[#30363d] rounded-2xl p-8 shadow-xl text-center">
-        <div className="w-16 h-16 bg-[#ccff00] rounded-full flex items-center justify-center mx-auto mb-6 text-3xl shadow-[0_0_20px_rgba(204,255,0,0.3)]">
-          ⚡
+    <div className="min-h-screen bg-[#0d1117] flex flex-col items-center justify-center p-4 relative overflow-hidden">
+      {/* Animated background gradient */}
+      <div className="absolute inset-0 opacity-5">
+        <div className="absolute top-20 left-10 w-64 h-64 bg-[#ccff00] rounded-full blur-3xl animate-pulse" style={{animationDuration: '4s'}}></div>
+        <div className="absolute bottom-20 right-10 w-64 h-64 bg-[#ccff00] rounded-full blur-3xl animate-pulse" style={{animationDuration: '5s', animationDelay: '1s'}}></div>
+      </div>
+
+      <div className="w-full max-w-md bg-[#161b22] border border-[#30363d] rounded-2xl p-8 shadow-2xl text-center relative z-10">
+        {/* Logo section */}
+        <div className="mb-8">
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <svg width="48" height="48" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="64" cy="64" r="52" fill="none" stroke="#ccff00" strokeWidth="3" opacity="0.8"/>
+              <path d="M 64 32 L 70 50 L 58 50 L 72 80 L 60 80 L 74 110 L 50 70 L 62 70 L 48 32 Z" fill="#ccff00" opacity="0.95"/>
+              <circle cx="85" cy="50" r="3" fill="#ccff00" opacity="0.7"/>
+              <circle cx="43" cy="78" r="3" fill="#ccff00" opacity="0.7"/>
+            </svg>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-[#ccff00] to-[#99cc00] bg-clip-text text-transparent">StokeMeet</h1>
+          </div>
+          <p className="text-[#8b949e] text-sm font-medium tracking-widest uppercase">Intelligence in Every Meeting</p>
         </div>
-        <h1 className="text-3xl font-bold text-[#e6edf3] mb-2">Welcome to StokeMeet</h1>
-        <p className="text-[#8b949e] mb-8">Sign in to access your intelligent meeting insights.</p>
+
+        <div className="border-t border-[#30363d] my-6"></div>
+
+        <h2 className="text-2xl font-bold text-[#e6edf3] mb-2">Welcome Back</h2>
+        <p className="text-[#8b949e] mb-8">Sign in to access your intelligent meeting insights and analytics.</p>
 
         <button
           onClick={signInWithGoogle}

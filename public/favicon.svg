@@ -1,0 +1,38 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="128" height="128" fill="#0d1117"/>
+  
+  <!-- Neon glow effect -->
+  <defs>
+    <filter id="neonGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <radialGradient id="neonGradient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#ccff00;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#99cc00;stop-opacity:0.8" />
+    </radialGradient>
+  </defs>
+  
+  <!-- Outer circle with glow -->
+  <circle cx="64" cy="64" r="60" fill="none" stroke="#ccff00" stroke-width="2" opacity="0.6" filter="url(#neonGlow)"/>
+  
+  <!-- Main icon: stylized "S" with lightning bolt integrated -->
+  <g filter="url(#neonGlow)">
+    <!-- Outer ring -->
+    <circle cx="64" cy="64" r="52" fill="none" stroke="url(#neonGradient)" stroke-width="3"/>
+    
+    <!-- Lightning bolt / energy symbol -->
+    <path d="M 64 32 L 70 50 L 58 50 L 72 80 L 60 80 L 74 110 L 50 70 L 62 70 L 48 32 Z" 
+          fill="#ccff00" 
+          opacity="0.95"
+          filter="url(#neonGlow)"/>
+    
+    <!-- Accent dots -->
+    <circle cx="85" cy="50" r="3" fill="#ccff00" opacity="0.7"/>
+    <circle cx="43" cy="78" r="3" fill="#ccff00" opacity="0.7"/>
+  </g>
+</svg>
