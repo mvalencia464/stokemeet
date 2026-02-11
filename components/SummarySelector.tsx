@@ -26,7 +26,7 @@ export const SummarySelector: React.FC<SummarySelectorProps> = ({ selectedType, 
         <select
           value={selectedType}
           onChange={(e) => onTypeChange(e.target.value as MeetingType)}
-          className="bg-[#161b22] border border-[#30363d] text-[#e6edf3] text-sm rounded-lg px-4 py-2 appearance-none cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#0070f3] min-w-[200px]"
+          className="bg-[#161b22] border border-[#30363d] text-[#e6edf3] text-sm rounded-lg px-4 py-2 appearance-none cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#ccff00] min-w-[200px]"
         >
           {Object.keys(MEETING_TYPES_CONFIG).map((type) => (
             <option key={type} value={type}>
@@ -39,15 +39,13 @@ export const SummarySelector: React.FC<SummarySelectorProps> = ({ selectedType, 
         </div>
       </div>
 
-      <div className="flex items-center gap-2 bg-[#161b22] border border-[#30363d] rounded-lg px-3 py-2">
-        <span className="text-sm text-[#8b949e]">🇺🇸 EN</span>
-      </div>
+
 
       <button
         onClick={handleCopy}
         className={`ml-auto text-sm font-semibold px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 ${copied
             ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20'
-            : 'bg-[#0070f3]/10 text-[#0070f3] hover:bg-[#0070f3]/20'
+            : 'bg-[#ccff00]/10 text-[#ccff00] hover:bg-[#ccff00]/20'
           }`}
       >
         {copied ? (

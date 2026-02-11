@@ -51,7 +51,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, title, thumbnailU
 
         {/* Play Button Overlay */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-16 h-16 bg-[#0070f3] rounded-full flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform duration-300">
+          <div className="w-16 h-16 bg-[#ccff00] rounded-full flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform duration-300">
             <svg className="w-6 h-6 text-white ml-1" fill="currentColor" viewBox="0 0 20 20">
               <path d="M6 4l10 6-10 6V4z"></path>
             </svg>

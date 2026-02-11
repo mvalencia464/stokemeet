@@ -75,7 +75,7 @@ export const FathomThumbnail: React.FC<FathomThumbnailProps> = ({ meeting }) => 
 
                 {/* Play Button Overlay */}
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <div className="w-12 h-12 bg-[#0070f3] rounded-full flex items-center justify-center shadow-lg transform scale-90 group-hover:scale-100 transition-transform">
+                    <div className="w-12 h-12 bg-[#ccff00] rounded-full flex items-center justify-center shadow-lg transform scale-90 group-hover:scale-100 transition-transform">
                         <svg className="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 20 20"><path d="M6 4l10 6-10 6V4z"></path></svg>
                     </div>
                 </div>
@@ -100,7 +100,7 @@ export const FathomThumbnail: React.FC<FathomThumbnailProps> = ({ meeting }) => 
             ></div>
 
             {/* Play Icon - Always visible in fallback mode per original design, but enhanced interaction */}
-            <div className="z-10 w-12 h-12 bg-[#30363d]/50 rounded-full flex items-center justify-center backdrop-blur-sm group-hover:bg-[#0070f3] transition-colors shadow-sm">
+            <div className="z-10 w-12 h-12 bg-[#30363d]/50 rounded-full flex items-center justify-center backdrop-blur-sm group-hover:bg-[#ccff00] transition-colors shadow-sm">
                 <svg className="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 20 20"><path d="M6 4l10 6-10 6V4z"></path></svg>
             </div>
 

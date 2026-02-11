@@ -17,7 +17,7 @@ export const Header: React.FC<HeaderProps> = ({ title, date }) => {
       
       <div className="flex items-center gap-3 mt-4 md:mt-0">
         <div className="flex items-center gap-2 bg-[#161b22] border border-[#30363d] rounded-lg px-3 py-1.5 cursor-pointer hover:bg-[#21262d]">
-          <span className="text-blue-500">🔗</span>
+          <span className="text-[#ccff00]">🔗</span>
           <span className="text-sm font-medium">Share</span>
         </div>
         <Button variant="ghost" className="p-2 h-auto w-auto">

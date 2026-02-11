@@ -29,7 +29,7 @@ export const MeetingList: React.FC<MeetingListProps> = ({ meetings, onSelect, is
             className="p-4 hover:bg-[#21262d] cursor-pointer transition-colors"
             onClick={() => onSelect(meeting)}
           >
-            <h4 className="text-sm font-semibold text-[#58a6ff]">{meeting.title || "Untitled Meeting"}</h4>
+            <h4 className="text-sm font-semibold text-[#ccff00]">{meeting.title || "Untitled Meeting"}</h4>
             <div className="flex justify-between items-center mt-1">
               <p className="text-xs text-[#8b949e]">{new Date(meeting.recording_start_time).toLocaleDateString()}</p>
               <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#30363d] text-[#c9d1d9] capitalize">

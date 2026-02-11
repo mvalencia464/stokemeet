@@ -6,7 +6,7 @@ import { SummarySelector } from './SummarySelector';
 import { Attendees } from './Attendees';
 import { ActionItems } from './ActionItems';
 import { MeetingType, MeetingData, ActionItem } from '../types';
-import { generateMeetingSummary, askMeetingQuestion } from '../services/geminiService';
+import { generateMeetingSummary, askMeetingQuestion, generateFollowUpEmail } from '../services/geminiService';
 import { getFathomData } from '../services/fathomService';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -27,6 +27,7 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState<string | null>(null);
   const [asking, setAsking] = useState(false);
+  const [isGeneratingEmail, setIsGeneratingEmail] = useState(false);
 
   React.useEffect(() => {
     async function loadData() {
@@ -43,17 +44,140 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
     loadData();
   }, [meetingData.videoUrl]);
 
+  // Auto-generate AI summary on initial load if not present
+  React.useEffect(() => {
+    async function generateInitialSummary() {
+      if (!meetingData.summaryContent && meetingData.transcript) {
+        setLoading(true);
+        try {
+          const { loadSummary, saveSummary } = await import('../services/storageService');
+          const cached = loadSummary(meetingData.id, meetingData.currentType);
+
+          if (cached) {
+            // Use cached summary
+            const newActions: ActionItem[] = cached.actionItems.map((item, i) => {
+              if (typeof item === 'string') {
+                return {
+                  id: `gen-${Date.now()}-${i}`,
+                  text: item,
+                  assignee: "Auto-assigned",
+                  completed: false
+                };
+              }
+              return {
+                id: `gen-${Date.now()}-${i}`,
+                text: item.text,
+                assignee: item.assignee,
+                completed: false
+              };
+            });
+
+            setMeetingData(prev => ({
+              ...prev,
+              summaryContent: cached.content,
+              actionItems: [...prev.actionItems, ...newActions].slice(-10)
+            }));
+          } else {
+            // Generate new AI summary
+            const attendeeNames = meetingData.attendees.map(a => a.name);
+            const result = await generateMeetingSummary(
+              meetingData.transcript,
+              meetingData.currentType,
+              meetingData.date,
+              attendeeNames
+            );
+
+            // Save to cache
+            saveSummary(meetingData.id, meetingData.currentType, {
+              content: result.content,
+              actionItems: result.actionItems,
+              timestamp: Date.now()
+            });
+
+            const newActions: ActionItem[] = result.actionItems.map((item, i) => ({
+              id: `gen-${Date.now()}-${i}`,
+              text: item.text,
+              assignee: item.assignee,
+              completed: false
+            }));
+
+            setMeetingData(prev => ({
+              ...prev,
+              summaryContent: result.content,
+              actionItems: [...prev.actionItems, ...newActions].slice(-10)
+            }));
+          }
+        } catch (e) {
+          console.error("Failed to generate initial summary:", e);
+          setMeetingData(prev => ({
+            ...prev,
+            summaryContent: "Failed to generate summary. Please try changing the summary type."
+          }));
+        } finally {
+          setLoading(false);
+        }
+      }
+    }
+    generateInitialSummary();
+  }, [meetingData.id]); // Only run once when meeting ID changes
+
   const handleTypeChange = async (newType: MeetingType) => {
     setLoading(true);
     setMeetingData(prev => ({ ...prev, currentType: newType }));
 
     try {
-      const result = await generateMeetingSummary(meetingData.transcript, newType);
+      // Check cache first
+      const { loadSummary, saveSummary } = await import('../services/storageService');
+      const cached = loadSummary(meetingData.id, newType);
 
-      const newActions: ActionItem[] = result.actionItems.map((text, i) => ({
+      if (cached) {
+        // Use cached summary
+        const newActions: ActionItem[] = cached.actionItems.map((item, i) => {
+          if (typeof item === 'string') {
+            return {
+              id: `gen-${Date.now()}-${i}`,
+              text: item,
+              assignee: "Auto-assigned",
+              completed: false
+            };
+          }
+          return {
+            id: `gen-${Date.now()}-${i}`,
+            text: item.text,
+            assignee: item.assignee,
+            completed: false
+          };
+        });
+
+        setMeetingData(prev => ({
+          ...prev,
+          summaryContent: cached.content,
+          actionItems: [...prev.actionItems, ...newActions].slice(-10)
+        }));
+        setLoading(false);
+        return;
+      }
+
+      // Generate new summary if not cached
+      const attendeeNames = meetingData.attendees.map(a => a.name);
+      const result = await generateMeetingSummary(
+        meetingData.transcript,
+        newType,
+        meetingData.date,
+        attendeeNames
+      );
+
+      // Save to cache
+      saveSummary(meetingData.id, newType, {
+        content: result.content,
+        actionItems: result.actionItems,
+        timestamp: Date.now()
+      });
+
+      const newActions: ActionItem[] = result.actionItems.map((item, i) => ({
         id: `gen-${Date.now()}-${i}`,
-        text,
-        assignee: "Auto-assigned",
+        text: item.text,
+        assignee: item.assignee,
         completed: false
       }));
 
@@ -102,6 +226,34 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
     navigator.clipboard.writeText(text);
   };
 
+  const handleCopyActionItems = () => {
+    const actionItemsText = meetingData.actionItems
+      .map(item => `- ${item.assignee}: ${item.text}`)
+      .join('\n');
+    copyToClipboard(actionItemsText);
+  };
+
+  const handleGenerateFollowUpEmail = async () => {
+    setIsGeneratingEmail(true);
+    try {
+      // Get the first attendee as the user (or you could make this configurable)
+      const userName = meetingData.attendees[0]?.name || "User";
+
+      const email = await generateFollowUpEmail(
+        meetingData.summaryContent,
+        meetingData.actionItems.map(item => ({ text: item.text, assignee: item.assignee })),
+        userName,
+        meetingData.videoUrl
+      );
+
+      copyToClipboard(email);
+    } catch (error) {
+      console.error("Error generating email:", error);
+    } finally {
+      setIsGeneratingEmail(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-[#0d1117]">
       <div className="flex items-center bg-[#0d1117] border-b border-[#30363d] sticky top-0 z-50">
@@ -120,7 +272,7 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
             </div>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 bg-[#161b22] border border-[#30363d] rounded-lg px-3 py-1.5 cursor-pointer hover:bg-[#21262d]">
-                <span className="text-blue-500">🔗</span>
+                <span className="text-[#ccff00]">🔗</span>
                 <span className="text-sm font-medium">Share</span>
               </div>
             </div>
@@ -145,7 +297,7 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
                     onCopy={() => copyToClipboard(meetingData.summaryContent)}
                   />
 
-                  <div className="p-8 prose prose-invert max-w-none relative group/summary">
+                  <div className="p-5 prose prose-invert max-w-none relative group/summary">
                     <button
                       onClick={() => copyToClipboard(meetingData.summaryContent)}
                       className="absolute top-4 right-4 opacity-0 group-hover/summary:opacity-100 transition-opacity bg-[#21262d] border border-[#30363d] text-[#8b949e] hover:text-[#e6edf3] text-xs px-2 py-1 rounded"
@@ -155,30 +307,43 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
 
                     {loading ? (
                       <div className="flex flex-col items-center justify-center py-20 space-y-4">
-                        <div className="w-10 h-10 border-4 border-[#0070f3] border-t-transparent rounded-full animate-spin"></div>
+                        <div className="w-10 h-10 border-4 border-[#ccff00] border-t-transparent rounded-full animate-spin"></div>
                         <p className="text-[#8b949e] animate-pulse">Generating {meetingData.currentType} insights...</p>
                       </div>
                     ) : (
                       <div className="summary-content">
-                        <div className="text-[#c9d1d9] leading-relaxed space-y-4">
+                        <div className="text-[#c9d1d9] leading-snug space-y-2">
                           <ReactMarkdown
                             remarkPlugins={[remarkGfm]}
                             components={{
-                              h1: ({ node, ...props }) => <h1 className="text-2xl font-bold mt-8 mb-4 text-[#e6edf3]" {...props} />,
+                              h1: ({ node, ...props }) => <h1 className="text-2xl font-extrabold mt-6 mb-3 text-white tracking-tight border-b border-[#30363d] pb-2" {...props} />,
                               h2: ({ node, ...props }) => (
-                                <div className="group/section relative mt-8 mb-3 pb-2 border-b border-[#30363d]">
-                                  <h2 className="text-xl font-bold text-[#e6edf3]" {...props} />
+                                <div className="group/section relative mt-6 mb-2 pb-1">
+                                  <div className="absolute -left-4 top-1 w-1 h-5 bg-[#ccff00] rounded-r opacity-0 group-hover/section:opacity-100 transition-opacity"></div>
+                                  <h2 className="text-lg font-bold text-[#e6edf3] flex items-center gap-2" {...props} />
                                 </div>
                               ),
                               h3: ({ node, ...props }) => (
-                                <div className="group/subsection relative mt-6 mb-2">
-                                  <h3 className="text-lg font-semibold text-[#e6edf3]" {...props} />
+                                <div className="group/subsection relative mt-4 mb-1.5">
+                                  <h3 className="text-base font-semibold text-[#c9d1d9]" {...props} />
                                 </div>
                               ),
-                              ul: ({ node, ...props }) => <ul className="list-disc ml-6 space-y-1" {...props} />,
-                              li: ({ node, ...props }) => <li className="text-sm" {...props} />,
-                              p: ({ node, ...props }) => <p className="text-sm mb-4" {...props} />,
-                              strong: ({ node, ...props }) => <strong className="font-bold text-[#e6edf3]" {...props} />,
+                              blockquote: ({ node, ...props }) => (
+                                <div className="my-3 p-3 bg-[#161b22] border-l-4 border-[#ccff00] rounded-r-lg shadow-sm">
+                                  <blockquote className="text-[#e6edf3] italic text-sm leading-snug" {...props} />
+                                </div>
+                              ),
+                              ul: ({ node, ...props }) => <ul className="space-y-1 my-2 [&_ul]:ml-8 [&_ul]:mt-1 [&_ul]:space-y-0.5" {...props} />,
+                              ol: ({ node, ...props }) => <ol className="space-y-1 my-2 [&_ol]:ml-8 [&_ol]:mt-1 [&_ol]:space-y-0.5" {...props} />,
+                              li: ({ node, ...props }) => (
+                                <li className="text-sm leading-tight flex items-start gap-2">
+                                  <span className="text-[#ccff00] mt-0.5 shrink-0">•</span>
+                                  <span className="flex-1" {...props} />
+                                </li>
+                              ),
+                              p: ({ node, ...props }) => <p className="text-sm leading-snug text-[#c9d1d9] mb-2" {...props} />,
+                              strong: ({ node, ...props }) => <strong className="font-semibold text-[#ccff00]" {...props} />,
+                              a: ({ node, ...props }) => <a className="text-[#ccff00] hover:underline" {...props} />,
                             }}
                           >
                             {meetingData.summaryContent}
@@ -201,7 +366,7 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
                       >
                         Copy Full Transcript
                       </button>
-                      <input type="text" placeholder="Search transcript..." className="bg-[#0d1117] border border-[#30363d] rounded px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-[#0070f3]" />
+                      <input type="text" placeholder="Search transcript..." className="bg-[#0d1117] border border-[#30363d] rounded px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-[#ccff00]" />
                     </div>
                   </div>
                   {meetingData.transcript.split('\n').filter(l => l.trim()).map((line, i) => {
@@ -210,7 +375,7 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
                       <div key={i} className="flex gap-4 group cursor-pointer hover:bg-[#30363d]/20 p-2 rounded transition-colors">
                         <span className="text-[10px] text-[#8b949e] w-12 pt-1">0{Math.floor(i * 0.5)}:0{i}</span>
                         <div className="flex flex-col flex-1">
-                          <span className="text-xs font-bold text-[#0070f3] mb-1 uppercase tracking-tighter">{speaker}</span>
+                          <span className="text-xs font-bold text-[#ccff00] mb-1 uppercase tracking-tighter">{speaker}</span>
                           <p className="text-sm text-[#c9d1d9]">{text.join(':')}</p>
                         </div>
                       </div>
@@ -221,7 +386,7 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
 
               {activeTab === 'ask' && (
                 <div className="p-8 h-full flex flex-col items-center justify-center text-center space-y-6">
-                  <div className="w-16 h-16 bg-[#0070f3]/10 rounded-full flex items-center justify-center text-[#0070f3] text-2xl">
+                  <div className="w-16 h-16 bg-[#ccff00]/10 rounded-full flex items-center justify-center text-[#ccff00] text-2xl">
                     ✨
                   </div>
                   <h3 className="text-xl font-bold">Ask StokeMeet AI about this meeting</h3>
@@ -234,13 +399,13 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
                       onChange={(e) => setQuestion(e.target.value)}
                       onKeyDown={handleKeyDown}
                       placeholder="What was the decision on the winter promo?"
-                      className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl py-4 pl-6 pr-16 text-sm focus:outline-none focus:ring-2 focus:ring-[#0070f3]"
+                      className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl py-4 pl-6 pr-16 text-sm focus:outline-none focus:ring-2 focus:ring-[#ccff00]"
                       disabled={asking}
                     />
                     <button
                       onClick={handleAskQuestion}
                       disabled={asking || !question.trim()}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 bg-[#0070f3] p-2 rounded-lg text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 bg-[#ccff00] p-2 rounded-lg text-black disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {asking ? (
                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -253,11 +418,13 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
                   {answer && (
                     <div className="w-full max-w-lg mt-6 bg-[#161b22] border border-[#30363d] rounded-xl p-6 text-left">
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-xs font-bold text-[#0070f3] uppercase tracking-wider">StokeMeet AI</span>
+                        <span className="text-xs font-bold text-[#ccff00] uppercase tracking-wider drop-shadow-[0_0_8px_rgba(204,255,0,0.5)]">StokeMeet AI</span>
                       </div>
-                      <ReactMarkdown className="text-sm text-[#e6edf3] leading-relaxed prose prose-invert">
-                        {answer}
-                      </ReactMarkdown>
+                      <div className="text-sm text-[#e6edf3] leading-relaxed prose prose-invert">
+                        <ReactMarkdown>
+                          {answer}
+                        </ReactMarkdown>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -269,7 +436,13 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
         {/* Right Side - Sidebar */}
         <aside className="w-full lg:w-96 border-l border-[#30363d] bg-[#0d1117] overflow-y-auto">
           <Attendees attendees={meetingData.attendees} />
-          <ActionItems items={meetingData.actionItems} onToggle={toggleActionItem} />
+          <ActionItems
+            items={meetingData.actionItems}
+            onToggle={toggleActionItem}
+            onCopyFor={handleCopyActionItems}
+            onFollowUpEmail={handleGenerateFollowUpEmail}
+            isGeneratingEmail={isGeneratingEmail}
+          />
 
           <div className="p-6 mt-10">
             {/* Upgrade banner removed */}

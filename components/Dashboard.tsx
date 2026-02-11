@@ -34,7 +34,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onMeetingSelect }) => {
     return (
       <div className="min-h-screen bg-[#0d1117] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-[#0070f3] border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-12 h-12 border-4 border-[#ccff00] border-t-transparent rounded-full animate-spin"></div>
           <p className="text-[#8b949e] animate-pulse">Loading your meetings...</p>
         </div>
       </div>
@@ -80,16 +80,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ onMeetingSelect }) => {
           meetings.map((meeting) => (
             <div
               key={meeting.url}
-              className="bg-[#161b22] border border-[#30363d] rounded-xl overflow-hidden hover:border-[#58a6ff] hover:shadow-xl hover:shadow-[#0070f3]/10 transition-all cursor-pointer group flex flex-col h-full"
+              className="bg-[#161b22] border border-[#30363d] rounded-xl overflow-hidden hover:border-[#ccff00] hover:shadow-[0_0_20px_rgba(204,255,0,0.15)] transition-all duration-300 cursor-pointer group flex flex-col h-full hover:-translate-y-1"
               onClick={() => onMeetingSelect(meeting)}
             >
-              <div className="aspect-video bg-[#0d1117] relative flex items-center justify-center overflow-hidden border-b border-[#30363d] group-hover:border-[#58a6ff]/30 transition-colors">
+              <div className="aspect-video bg-[#0d1117] relative flex items-center justify-center overflow-hidden border-b border-[#30363d] group-hover:border-[#ccff00]/30 transition-colors">
                 <FathomThumbnail meeting={meeting} />
               </div>
 
               <div className="p-4 flex-1 flex flex-col">
                 <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-semibold text-[#e6edf3] line-clamp-2 leading-tight group-hover:text-[#58a6ff] transition-colors">
+                  <h3 className="font-semibold text-[#e6edf3] line-clamp-2 leading-tight group-hover:text-[#ccff00] transition-colors">
                     {meeting.title || "Untitled Meeting"}
                   </h3>
                 </div>

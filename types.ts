@@ -35,6 +35,7 @@ export interface ActionItem {
 }
 
 export interface MeetingData {
+  id: string;
   title: string;
   date: string;
   duration: string;
