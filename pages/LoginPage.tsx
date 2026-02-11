@@ -39,7 +39,7 @@ export const LoginPage: React.FC = () => {
 
         <button
           onClick={signInWithGoogle}
-          className="w-full bg-[#e6edf3] hover:bg-white text-[#0d1117] font-bold py-3 px-6 rounded-lg transition-all duration-200 flex items-center justify-center gap-3 hover:scale-[1.02]"
+          className="w-full bg-transparent border-2 border-[#ccff00] hover:border-[#ddff33] text-[#ccff00] hover:text-[#ddff33] font-bold py-3 px-6 rounded-lg transition-all duration-300 flex items-center justify-center gap-3 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(204,255,0,0.4)]"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path
