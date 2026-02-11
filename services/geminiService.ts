@@ -27,11 +27,21 @@ export async function generateMeetingSummary(
   // Use custom name if provided (for custom profiles), otherwise use the type or default config
   const displayType = customName || type;
 
-  // Define Output Format instruction based on whether it's a custom prompt
+  // Define Output Format instruction based on whether it's a custom prompt or specific framework
+  const FRAMEWORK_BASED_TYPES = [
+    MeetingType.SALES_SANDLER,
+    MeetingType.SALES_SPICED,
+    MeetingType.SALES_MEDDPICC,
+    MeetingType.SALES_BANT,
+    MeetingType.CUSTOMER_SUCCESS_REACH,
+    MeetingType.RETROSPECTIVE,
+    MeetingType.STAND_UP
+  ];
+
   let outputFormatInstruction = "";
   
-  if (customSystemPrompt) {
-    // For custom profiles, allow more flexibility but enforce header and action items
+  if (customSystemPrompt || FRAMEWORK_BASED_TYPES.includes(type as MeetingType)) {
+    // For custom profiles and strict frameworks, allow more flexibility but enforce header and action items
     outputFormatInstruction = `
     Output Format (Markdown):
     # ${displayType}
