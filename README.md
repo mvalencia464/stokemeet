@@ -3,7 +3,7 @@
 </div>
 
 # Run and deploy your AI Studio app
-<!-- Entire test comment -->
+<!-- Entire test comment: Verify checkpoint capture -->
 
 This contains everything you need to run your app locally.
 
