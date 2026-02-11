@@ -17,30 +17,81 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authCallbackProcessed, setAuthCallbackProcessed] = useState(false);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    let mounted = true;
+    let authCheckTimeout: NodeJS.Timeout;
 
-    // Listen for auth changes
+    // Check if we are handling an OAuth callback
+    const hasAuthParams = window.location.hash.includes('access_token') || 
+                          window.location.search.includes('code');
+
+    // Set up auth state change listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) return;
+      
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      setAuthCallbackProcessed(true);
+      
+      // Clear the auth params from URL after successful auth
+      if (session && (window.location.hash.includes('access_token') || window.location.search.includes('code'))) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
     });
 
-    return () => subscription.unsubscribe();
+    // Then get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
+
+      if (session) {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+        setAuthCallbackProcessed(true);
+      } else if (!hasAuthParams) {
+        // No session and no auth params - we're not logging in
+        setSession(null);
+        setUser(null);
+        setLoading(false);
+        setAuthCallbackProcessed(true);
+      } else {
+        // Has auth params but no session yet - wait longer for Supabase to process
+        authCheckTimeout = setTimeout(() => {
+          if (!mounted) return;
+          
+          supabase.auth.getSession().then(({ data: { session } }) => {
+            if (!mounted) return;
+            
+            if (session) {
+              setSession(session);
+              setUser(session?.user ?? null);
+            } else {
+              // Still no session after wait - something went wrong
+              setSession(null);
+              setUser(null);
+            }
+            setLoading(false);
+            setAuthCallbackProcessed(true);
+          });
+        }, 2000); // Wait 2 seconds for Supabase to process the token
+      }
+    });
+
+    return () => {
+      mounted = false;
+      clearTimeout(authCheckTimeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signInWithGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/dashboard`
+        redirectTo: `${window.location.origin}/login`
       }
     });
     if (error) throw error;
