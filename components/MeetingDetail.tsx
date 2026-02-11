@@ -254,6 +254,12 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
     }
   };
 
+  const handleShareMeeting = () => {
+    if (meetingData.videoUrl) {
+      copyToClipboard(meetingData.videoUrl);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-[#0d1117]">
       <div className="flex items-center bg-[#0d1117] border-b border-[#30363d] sticky top-0 z-50">
@@ -271,10 +277,16 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
               <p className="text-sm text-[#8b949e]">{meetingData.date}</p>
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 bg-[#161b22] border border-[#30363d] rounded-lg px-3 py-1.5 cursor-pointer hover:bg-[#21262d]">
-                <span className="text-[#ccff00]">🔗</span>
+              <button
+                onClick={handleShareMeeting}
+                className="flex items-center gap-2 bg-[#ccff00]/10 border border-[#ccff00]/30 rounded-lg px-3 py-1.5 text-[#ccff00] hover:bg-[#ccff00]/20 transition-colors cursor-pointer"
+                title="Copy Fathom share link"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C9.017 13.742 9.5 14 10 14h4c.5 0 .983-.258 1.316-.658m-9.879-12.89a1 1 0 111.414-1.414m0 0L4 3m1.414-1.414L1 4m14.142-1.414a1 1 0 111.414 1.414m0 0l2.828 2.828m-2.828-2.828L18 1M9 5h6M9 9h6" />
+                </svg>
                 <span className="text-sm font-medium">Share</span>
-              </div>
+              </button>
             </div>
           </div>
         </div>
