@@ -13,7 +13,8 @@ export async function generateMeetingSummary(
   type: MeetingType | string,
   meetingDate?: string,
   attendeeNames?: string[],
-  customSystemPrompt?: string
+  customSystemPrompt?: string,
+  customName?: string
 ): Promise<{ content: string, actionItems: { text: string; assignee: string }[] }> {
   const attendeeList = attendeeNames && attendeeNames.length > 0
     ? attendeeNames.join(', ')
@@ -22,32 +23,42 @@ export async function generateMeetingSummary(
   // Get the system prompt from config or use custom one
   const config = MEETING_TYPES_CONFIG[type as MeetingType];
   const frameworkInstruction = customSystemPrompt || config?.systemPrompt || 'Provide a clear, structured summary of the meeting.';
-  const displayType = customSystemPrompt ? type : type;
+  
+  // Use custom name if provided (for custom profiles), otherwise use the type or default config
+  const displayType = customName || type;
 
-  const prompt = `
-    You are an expert meeting analyst for StokeMeet. Based on the transcript provided, generate a clean, structured meeting summary.
+  // Define Output Format instruction based on whether it's a custom prompt
+  let outputFormatInstruction = "";
+  
+  if (customSystemPrompt) {
+    // For custom profiles, allow more flexibility but enforce header and action items
+    outputFormatInstruction = `
+    Output Format (Markdown):
+    # ${displayType}
     
-    Framework Instructions: ${frameworkInstruction}
+    > **Executive Summary:** [A 2-3 sentence high-level overview.]
     
-    Meeting Metadata:
-    - Date: ${meetingDate || 'Not specified'}
-    - Attendees: ${attendeeList}
-    - Summary Type: ${displayType}
+    **Date:** ${meetingDate || 'Not specified'}
+    **Attendees:** ${attendeeList}
     
-    Transcript:
-    """
-    ${transcript}
-    """
+    ## [Framework Section 1]
+    [Content...]
     
-    Instructions:
-    1. Apply the framework instructions above to guide your analysis and summary structure.
-    2. Use the provided date and attendee names - DO NOT try to infer them from the transcript.
-    3. When assigning action items in the "Next Steps" section, ONLY use names from the attendee list provided above.
-    4. Extract specific details, numbers, and decisions from the transcript.
-    5. Start with a "glanceable" Executive Summary in a blockquote.
-    6. Format the "Action Items" section with checkable markdown boxes.
-    7. Tone: Professional, concise, and modern.
+    ## [Framework Section 2]
+    [Content...]
     
+    ... [Continue with sections relevant to the custom framework]
+    
+    ## Next Steps
+    [Person Name]:
+    * [Task]
+    
+    ## Action Items
+    - [ ] [Task] - [Assignee] - WATCH (5 secs)
+    `;
+  } else {
+    // Standard strict format for built-in types
+    outputFormatInstruction = `
     Output Format (Markdown):
     # ${displayType} Summary
     
@@ -84,6 +95,34 @@ export async function generateMeetingSummary(
     ## Action Items
     - [ ] [Specific, actionable task] - [Assignee name from attendee list] - WATCH (5 secs)
     - [ ] [Specific, actionable task] - [Assignee name from attendee list] - WATCH (5 secs)
+    `;
+  }
+
+  const prompt = `
+    You are an expert meeting analyst for StokeMeet. Based on the transcript provided, generate a clean, structured meeting summary.
+    
+    Framework Instructions: ${frameworkInstruction}
+    
+    Meeting Metadata:
+    - Date: ${meetingDate || 'Not specified'}
+    - Attendees: ${attendeeList}
+    - Summary Type: ${displayType}
+    
+    Transcript:
+    """
+    ${transcript}
+    """
+    
+    Instructions:
+    1. Apply the framework instructions above to guide your analysis and summary structure.
+    2. Use the provided date and attendee names - DO NOT try to infer them from the transcript.
+    3. When assigning action items in the "Next Steps" section, ONLY use names from the attendee list provided above.
+    4. Extract specific details, numbers, and decisions from the transcript.
+    5. Start with a "glanceable" Executive Summary in a blockquote.
+    6. Format the "Action Items" section with checkable markdown boxes.
+    7. Tone: Professional, concise, and modern.
+    
+    ${outputFormatInstruction}
   `;
 
   try {

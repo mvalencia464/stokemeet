@@ -101,11 +101,18 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
           } else {
             // Generate new AI summary
             const attendeeNames = meetingData.attendees.map(a => a.name);
+            
+            // Ensure we have the latest profiles
+            const profiles = customProfileService.getProfiles();
+            const customProfile = profiles.find(p => p.id === meetingData.currentType);
+
             const result = await generateMeetingSummary(
               meetingData.transcript,
               meetingData.currentType,
               meetingData.date,
-              attendeeNames
+              attendeeNames,
+              customProfile?.systemPrompt,
+              customProfile?.name
             );
 
             // Save to cache (remote or local)
@@ -202,7 +209,8 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
         newType,
         meetingData.date,
         attendeeNames,
-        customProfile?.systemPrompt
+        customProfile?.systemPrompt,
+        customProfile?.name
       );
 
       // Save to cache (remote or local)
