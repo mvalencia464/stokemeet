@@ -7,9 +7,10 @@ import { FathomThumbnail } from './FathomThumbnail';
 
 interface DashboardProps {
   onMeetingSelect: (meeting: FathomMeeting) => void;
+  onLogout?: () => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ onMeetingSelect }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ onMeetingSelect, onLogout }) => {
   const [meetings, setMeetings] = useState<FathomMeeting[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -67,7 +68,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onMeetingSelect }) => {
           <p className="text-[#8b949e]">Access all your recorded meetings and insights.</p>
         </div>
         <div className="flex gap-4">
-          {/* Add search or filter here later */}
+          {onLogout && (
+            <button
+              onClick={onLogout}
+              className="px-4 py-2 bg-[#21262d] hover:bg-[#30363d] text-[#e6edf3] border border-[#30363d] rounded-lg text-sm font-medium transition-colors"
+            >
+              Sign Out
+            </button>
+          )}
         </div>
       </header>
 
