@@ -50,7 +50,7 @@ const App: React.FC = () => {
         summaryContent: summaryData?.markdown_formatted || "No summary available.",
         actionItems,
         currentType: MeetingType.GENERAL, // Default type
-        videoUrl: fathomMeeting.url
+        videoUrl: fathomMeeting.share_url
       });
     } catch (e) {
       console.error("Error fetching meeting details:", e);

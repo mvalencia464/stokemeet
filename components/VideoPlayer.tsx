@@ -69,7 +69,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, title, thumbnailU
   if (embedHtml) {
     return (
       <div
-        className="relative aspect-video bg-black rounded-xl overflow-hidden group shadow-2xl border border-[#30363d]"
+        className="relative aspect-video bg-black rounded-xl overflow-hidden group shadow-2xl border border-[#30363d] [&_iframe]:w-full [&_iframe]:h-full"
         dangerouslySetInnerHTML={{ __html: embedHtml }}
       />
     );
