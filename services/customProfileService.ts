@@ -1,8 +1,23 @@
 import { CustomSummaryProfile } from '../types';
 
 const STORAGE_KEY = 'stokemeet_custom_profiles';
+const DEFAULT_PROFILE_KEY = 'stokemeet_default_profile';
 
 export const customProfileService = {
+  /**
+   * Get the default profile ID
+   */
+  getDefaultProfileId(): string {
+    return localStorage.getItem(DEFAULT_PROFILE_KEY) || 'General';
+  },
+
+  /**
+   * Set the default profile ID
+   */
+  setDefaultProfileId(id: string): void {
+    localStorage.setItem(DEFAULT_PROFILE_KEY, id);
+  },
+
   /**
    * Get all custom profiles from local storage
    */

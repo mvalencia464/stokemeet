@@ -9,6 +9,8 @@ interface SummarySelectorProps {
   onCopy?: () => void;
   onAddProfile?: () => void;
   customProfiles?: CustomSummaryProfile[];
+  defaultProfileId?: string;
+  onSetDefault?: (id: string) => void;
 }
 
 export const SummarySelector: React.FC<SummarySelectorProps> = ({ 
@@ -16,7 +18,9 @@ export const SummarySelector: React.FC<SummarySelectorProps> = ({
   onTypeChange, 
   onCopy,
   onAddProfile,
-  customProfiles = []
+  customProfiles = [],
+  defaultProfileId,
+  onSetDefault
 }) => {
   const [copied, setCopied] = React.useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
@@ -33,7 +37,7 @@ export const SummarySelector: React.FC<SummarySelectorProps> = ({
   const selectedCustom = customProfiles?.find(p => p.id === selectedType);
 
   const groupedTypes = React.useMemo(() => {
-    const grouped: Record<string, Array<{ type: string; config: typeof selectedConfig }>> = {
+    const grouped: Record<string, Array<{ type: string; name: string; config: typeof selectedConfig }>> = {
       'Free': [],
       'Most Used': [],
       'Sales': [],
@@ -45,13 +49,14 @@ export const SummarySelector: React.FC<SummarySelectorProps> = ({
     Object.entries(MEETING_TYPES_CONFIG).forEach(([type, config]) => {
       const category = config.category || 'Other';
       if (grouped[category]) {
-        grouped[category].push({ type, config });
+        grouped[category].push({ type, name: type, config });
       }
     });
 
     if (customProfiles && customProfiles.length > 0) {
       grouped['Custom Profiles'] = customProfiles.map(p => ({
         type: p.id,
+        name: p.name,
         config: {
           description: p.description,
           category: 'Custom Profiles' as const,
@@ -94,20 +99,43 @@ export const SummarySelector: React.FC<SummarySelectorProps> = ({
                   <div className="px-3 py-2 text-xs font-semibold text-[#8b949e] uppercase bg-[#161b22] sticky top-0">
                     {category}
                   </div>
-                  {types.map(({ type, config }) => (
-                    <button
+                  {types.map(({ type, name, config }) => (
+                    <div
                       key={type}
-                      onClick={() => {
-                        onTypeChange(type as MeetingType | string);
-                        setIsDropdownOpen(false);
-                      }}
-                      className={`w-full text-left px-3 py-3 hover:bg-[#1c2128] border-b border-[#30363d] transition-colors ${
+                      className={`group flex items-center justify-between px-3 py-3 border-b border-[#30363d] transition-colors hover:bg-[#1c2128] ${
                         selectedType === type ? 'bg-[#ccff00]/10 border-l-2 border-l-[#ccff00]' : ''
                       }`}
                     >
-                      <div className="font-medium text-[#e6edf3]">{type}</div>
-                      <div className="text-xs text-[#8b949e] mt-1">{config.description}</div>
-                    </button>
+                      <button
+                        onClick={() => {
+                          onTypeChange(type as MeetingType | string);
+                          setIsDropdownOpen(false);
+                        }}
+                        className="flex-1 text-left"
+                      >
+                        <div className="font-medium text-[#e6edf3]">{name}</div>
+                        <div className="text-xs text-[#8b949e] mt-1">{config.description}</div>
+                      </button>
+                      
+                      {onSetDefault && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSetDefault(type);
+                          }}
+                          title={defaultProfileId === type ? "Default profile" : "Set as default"}
+                          className={`p-1.5 rounded-full transition-all ${
+                            defaultProfileId === type 
+                              ? 'text-[#ccff00] opacity-100' 
+                              : 'text-[#8b949e] opacity-0 group-hover:opacity-100 hover:text-[#e6edf3] hover:bg-[#30363d]'
+                          }`}
+                        >
+                          <svg className="w-4 h-4" fill={defaultProfileId === type ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
                   ))}
                 </div>
               )

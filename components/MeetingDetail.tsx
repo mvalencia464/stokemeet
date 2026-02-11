@@ -30,6 +30,7 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
   // Custom Profiles State
   const [customProfiles, setCustomProfiles] = useState<CustomSummaryProfile[]>([]);
   const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
+  const [defaultProfileId, setDefaultProfileId] = useState<string>('');
 
   // Ask StokeMeet AI State
   const [question, setQuestion] = useState('');
@@ -42,6 +43,7 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
   React.useEffect(() => {
     const profiles = customProfileService.getProfiles();
     setCustomProfiles(profiles);
+    setDefaultProfileId(customProfileService.getDefaultProfileId());
   }, []);
 
   React.useEffect(() => {
@@ -246,6 +248,11 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
     }
   };
 
+  const handleSetDefaultProfile = (id: string) => {
+    customProfileService.setDefaultProfileId(id);
+    setDefaultProfileId(id);
+  };
+
   const toggleActionItem = (id: string) => {
     setMeetingData(prev => ({
       ...prev,
@@ -379,6 +386,8 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
                     onCopy={() => copyToClipboard(meetingData.summaryContent)}
                     onAddProfile={() => setIsCustomModalOpen(true)}
                     customProfiles={customProfiles}
+                    defaultProfileId={defaultProfileId}
+                    onSetDefault={handleSetDefaultProfile}
                   />
 
                   <div className="p-5 prose prose-invert max-w-none relative group/summary">

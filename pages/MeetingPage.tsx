@@ -4,6 +4,7 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { MeetingDetail } from '../components/MeetingDetail';
 import { MeetingData, MeetingType, ActionItem } from '../types';
 import { FathomMeeting, getMeetingTranscript, listMeetings } from '../services/fathomService';
+import { customProfileService } from '../services/customProfileService';
 
 export const MeetingPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -49,7 +50,7 @@ export const MeetingPage: React.FC = () => {
         transcript,
         summaryContent: "", // Will be populated by MeetingDetail logic
         actionItems,
-        currentType: MeetingType.GENERAL,
+        currentType: customProfileService.getDefaultProfileId(),
         videoUrl: fathomMeeting.share_url
       };
     } catch (e) {

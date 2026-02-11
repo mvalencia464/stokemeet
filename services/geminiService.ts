@@ -40,7 +40,7 @@ export async function generateMeetingSummary(
 
   let outputFormatInstruction = "";
   
-  if (customSystemPrompt || FRAMEWORK_BASED_TYPES.includes(type as MeetingType)) {
+  if (customName || customSystemPrompt || FRAMEWORK_BASED_TYPES.includes(type as MeetingType)) {
     // For custom profiles and strict frameworks, allow more flexibility but enforce header and action items
     outputFormatInstruction = `
     Output Format (Markdown):
