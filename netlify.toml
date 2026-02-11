@@ -1,0 +1,23 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# Proxy for Fathom API
+[[redirects]]
+  from = "/api/fathom/*"
+  to = "https://api.fathom.ai/external/v1/:splat"
+  status = 200
+  force = true
+
+# Proxy for OEmbed
+[[redirects]]
+  from = "/api/oembed"
+  to = "https://fathom.video/oembed"
+  status = 200
+  force = true
+
+# Catch-all for SPA client-side routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
