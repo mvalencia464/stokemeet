@@ -24,8 +24,7 @@ export const MeetingPage: React.FC = () => {
 
       const attendees = fathomMeeting.calendar_invitees.map(a => ({
         name: a.name,
-        email: a.email,
-        linkedIn: 'unknown'
+        email: a.email
       }));
 
       const actionItems: ActionItem[] = (fathomMeeting.action_items || []).map((ai, i) => ({

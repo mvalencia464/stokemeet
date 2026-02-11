@@ -33,7 +33,6 @@ export interface Attendee {
   name: string;
   email?: string;
   role?: string;
-  linkedIn?: string;
 }
 
 export interface ActionItem {
