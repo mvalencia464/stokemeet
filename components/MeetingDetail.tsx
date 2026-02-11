@@ -5,9 +5,11 @@ import { MainTabs } from './MainTabs';
 import { SummarySelector } from './SummarySelector';
 import { Attendees } from './Attendees';
 import { ActionItems } from './ActionItems';
-import { MeetingType, MeetingData, ActionItem } from '../types';
+import { MeetingType, MeetingData, ActionItem, CustomSummaryProfile } from '../types';
 import { generateMeetingSummary, askMeetingQuestion, generateFollowUpEmail } from '../services/geminiService';
 import { getFathomData } from '../services/fathomService';
+import { customProfileService } from '../services/customProfileService';
+import { CustomProfileModal } from './CustomProfileModal';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -23,12 +25,22 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
   const [embedHtml, setEmbedHtml] = useState<string | null>(null);
 
+  // Custom Profiles State
+  const [customProfiles, setCustomProfiles] = useState<CustomSummaryProfile[]>([]);
+  const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
+
   // Ask StokeMeet AI State
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState<string | null>(null);
   const [asking, setAsking] = useState(false);
   const [isGeneratingEmail, setIsGeneratingEmail] = useState(false);
   const [shareButtonCopied, setShareButtonCopied] = useState(false);
+
+  // Load profiles on mount
+  React.useEffect(() => {
+    const profiles = customProfileService.getProfiles();
+    setCustomProfiles(profiles);
+  }, []);
 
   React.useEffect(() => {
     async function loadData() {
@@ -122,11 +134,14 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
     generateInitialSummary();
   }, [meetingData.id]); // Only run once when meeting ID changes
 
-  const handleTypeChange = async (newType: MeetingType) => {
+  const handleTypeChange = async (newType: MeetingType | string) => {
     setLoading(true);
     setMeetingData(prev => ({ ...prev, currentType: newType }));
 
     try {
+      // Check if it's a custom profile
+      const customProfile = customProfiles.find(p => p.id === newType);
+
       // Check cache first
       const { loadSummary, saveSummary } = await import('../services/storageService');
       const cached = loadSummary(meetingData.id, newType);
@@ -153,7 +168,8 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
         setMeetingData(prev => ({
           ...prev,
           summaryContent: cached.content,
-          actionItems: [...prev.actionItems, ...newActions].slice(-10)
+          actionItems: [...prev.actionItems, ...newActions].slice(-10),
+          customProfileId: customProfile?.id
         }));
         setLoading(false);
         return;
@@ -165,7 +181,8 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
         meetingData.transcript,
         newType,
         meetingData.date,
-        attendeeNames
+        attendeeNames,
+        customProfile?.systemPrompt
       );
 
       // Save to cache
@@ -185,7 +202,8 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
       setMeetingData(prev => ({
         ...prev,
         summaryContent: result.content,
-        actionItems: [...prev.actionItems, ...newActions].slice(-10)
+        actionItems: [...prev.actionItems, ...newActions].slice(-10),
+        customProfileId: customProfile?.id
       }));
     } catch (e) {
       console.error(e);
@@ -325,6 +343,8 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
                     selectedType={meetingData.currentType}
                     onTypeChange={handleTypeChange}
                     onCopy={() => copyToClipboard(meetingData.summaryContent)}
+                    onAddProfile={() => setIsCustomModalOpen(true)}
+                    customProfiles={customProfiles}
                   />
 
                   <div className="p-5 prose prose-invert max-w-none relative group/summary">
@@ -479,6 +499,18 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
           </div>
         </aside>
       </main>
+
+      <CustomProfileModal
+        isOpen={isCustomModalOpen}
+        onClose={() => setIsCustomModalOpen(false)}
+        onSave={(profile) => {
+          const saved = customProfileService.saveProfile(profile);
+          setCustomProfiles([...customProfiles, saved]);
+          setIsCustomModalOpen(false);
+          // Automatically switch to the new profile
+          handleTypeChange(saved.id);
+        }}
+      />
     </div>
   );
 };

@@ -1,24 +1,102 @@
 
 import { MeetingType } from './types';
 
-export const MEETING_TYPES_CONFIG: Record<MeetingType, { description: string }> = {
-  [MeetingType.CHRONOLOGICAL]: { description: 'Short summary of the meeting by chapter.' },
-  [MeetingType.GENERAL]: { description: "Capture any call's insights and key takeaways." },
-  [MeetingType.SALES]: { description: "Unpack a prospect's needs, challenges, and buying journey." },
-  [MeetingType.SALES_SANDLER]: { description: 'Notes based on Sandler Selling System.' },
-  [MeetingType.SALES_SPICED]: { description: 'Notes based on the sales methodology by Winning by Design.' },
-  [MeetingType.SALES_MEDDPICC]: { description: 'Notes based on the popular sales methodology.' },
-  [MeetingType.SALES_BANT]: { description: 'Notes based on the popular sales methodology.' },
-  [MeetingType.QA]: { description: 'Recap questions with answers.' },
-  [MeetingType.DEMO]: { description: 'Showcased journeys and impact.' },
-  [MeetingType.CUSTOMER_SUCCESS]: { description: 'Experiences, challenges, goals, and Q&A.' },
-  [MeetingType.CUSTOMER_SUCCESS_REACH]: { description: 'Notes based on an expansion framework by HelloCCO.' },
-  [MeetingType.ONE_ON_ONE]: { description: 'Updates, priorities, support signals, and discussion.' },
-  [MeetingType.PROJECT_UPDATE]: { description: "Breakdown each task's status, discussion, and next steps." },
-  [MeetingType.PROJECT_KICK_OFF]: { description: 'Vision, targets, and resources.' },
-  [MeetingType.CANDIDATE_INTERVIEW]: { description: "Delve into a candidate's experience, goals, and responses." },
-  [MeetingType.RETROSPECTIVE]: { description: 'Capture processes to start, stop, and continue.' },
-  [MeetingType.STAND_UP]: { description: 'Track daily progress, tasks, and obstacles.' },
+export interface MeetingTypeConfig {
+  description: string;
+  category?: 'Free' | 'Most Used' | 'Sales' | 'Customer Success' | 'Internal & Operations';
+  systemPrompt: string;
+}
+
+export const MEETING_TYPES_CONFIG: Record<MeetingType, MeetingTypeConfig> = {
+  [MeetingType.CHRONOLOGICAL]: {
+    category: 'Free',
+    description: 'Short summary of the meeting by chapter',
+    systemPrompt: 'Focus on a chapter-by-chapter summary of the meeting. Break the transcript into distinct topics or time segments and provide a short summary for each. Keep it concise and chronological.'
+  },
+  [MeetingType.GENERAL]: {
+    category: 'Most Used',
+    description: "Capture any call's insights and key takeaways",
+    systemPrompt: 'Focus on the discovery process and insights. Capture any call\'s insights and key takeaways. Identify major discussion points, decisions made, and key action items without requiring a specific framework.'
+  },
+  [MeetingType.SALES]: {
+    category: 'Sales',
+    description: "Unpack a prospect's needs, challenges, and buying journey",
+    systemPrompt: 'Focus on the discovery process. Identify the prospect\'s primary needs, the specific business challenges they are facing, and where they currently sit in their buying journey (e.g., researching, comparing, ready to buy).'
+  },
+  [MeetingType.SALES_SANDLER]: {
+    category: 'Sales',
+    description: 'Notes based on Sandler Selling System',
+    systemPrompt: 'Analyze the call using the Sandler Selling System. Specifically identify: 1. Pain (The emotional/business reason for change), 2. Budget (Ability and willingness to pay), and 3. Decision (Who, how, and when the decision is made).'
+  },
+  [MeetingType.SALES_SPICED]: {
+    category: 'Sales',
+    description: 'Notes based on the SPICED sales methodology by Winning by Design',
+    systemPrompt: 'Summarize using the SPICED framework: Situation (Context), Pain (The problem), Impact (Consequences of the pain), Critical Event (The deadline), and Decision Criteria.'
+  },
+  [MeetingType.SALES_MEDDPICC]: {
+    category: 'Sales',
+    description: 'Notes based on the MEDDPICC sales methodology',
+    systemPrompt: 'Extract details for: Metrics (Economic impact), Economic Buyer, Decision Criteria, Decision Process, Paper Process, Identified Pain, Champions, and Competition.'
+  },
+  [MeetingType.SALES_BANT]: {
+    category: 'Sales',
+    description: 'Notes based on the BANT sales methodology',
+    systemPrompt: 'Identify the four pillars of BANT: Budget (Is there a budget?), Authority (Who has the final say?), Need (What is the core problem?), and Timeline (When do they need a solution?).'
+  },
+  [MeetingType.QA]: {
+    category: 'Sales',
+    description: 'Recap questions with answers',
+    systemPrompt: 'Identify every distinct question asked during the session and provide the corresponding answer given. Format as a clean List of Questions and Answers.'
+  },
+  [MeetingType.DEMO]: {
+    category: 'Sales',
+    description: 'Showcased features, workflows, and prospect reactions',
+    systemPrompt: 'Highlight the features or workflows showcased during the demo. Record the prospect\'s reaction to each feature and the specific business impact/value they associated with those features.'
+  },
+  [MeetingType.CUSTOMER_SUCCESS]: {
+    category: 'Customer Success',
+    description: 'Experiences, challenges, goals, and customer health indicators',
+    systemPrompt: 'Focus on the customer\'s health. Identify their current experience with the product, specific technical or business challenges mentioned, their short-term goals, and any questions they asked.'
+  },
+  [MeetingType.CUSTOMER_SUCCESS_REACH]: {
+    category: 'Customer Success',
+    description: 'Notes based on REACH™ expansion framework by HelloCCO',
+    systemPrompt: 'Summarize using the REACH™ framework: Retention signals, Expansion opportunities, Adoption levels, Community involvement, and Health score indicators.'
+  },
+  [MeetingType.ONE_ON_ONE]: {
+    category: 'Internal & Operations',
+    description: 'Updates, priorities, support signals, and feedback',
+    systemPrompt: 'Summarize the interaction focusing on: Employee updates, top priorities for the week, signals where support/coaching is needed, and a list of feedback exchanged.'
+  },
+  [MeetingType.PROJECT_UPDATE]: {
+    category: 'Internal & Operations',
+    description: "Status report with task breakdown and next steps",
+    systemPrompt: 'Create a status report. For every task mentioned, identify its current Status (On track/Blocked/Done), a summary of the discussion around it, and the specific next steps.'
+  },
+  [MeetingType.PROJECT_KICK_OFF]: {
+    category: 'Internal & Operations',
+    description: 'Vision, targets, resources, and timeline',
+    systemPrompt: 'Summarize the project launch details: The overarching Vision, specific Targets/KPIs, assigned Resources/Teams, and the immediate timeline.'
+  },
+  [MeetingType.CANDIDATE_INTERVIEW]: {
+    category: 'Internal & Operations',
+    description: "Candidate experience, goals, and interview responses",
+    systemPrompt: 'Evaluate the candidate based on the transcript. Summarize their relevant experience, their stated career goals, and their specific responses to technical or behavioral questions.'
+  },
+  [MeetingType.RETROSPECTIVE]: {
+    category: 'Internal & Operations',
+    description: 'Start, Stop, Continue framework for team processes',
+    systemPrompt: 'Organize the summary into three categories: Start (New processes to implement), Stop (Inefficiencies to remove), and Continue (Successes to double down on).'
+  },
+  [MeetingType.STAND_UP]: {
+    category: 'Internal & Operations',
+    description: 'Daily progress, tasks, and blockers for each participant',
+    systemPrompt: 'Extract the three standard stand-up components for each participant: 1. What was done yesterday, 2. What is being done today, and 3. Any obstacles or \'blockers\' in the way.'
+  },
+  [MeetingType.CUSTOM]: {
+    description: 'Create a custom summary profile with your own instructions',
+    systemPrompt: 'Apply the custom framework instructions provided by the user.'
+  }
 };
 
 export const MOCK_TRANSCRIPT = `

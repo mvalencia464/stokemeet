@@ -16,7 +16,17 @@ export enum MeetingType {
   PROJECT_KICK_OFF = 'Project Kick-Off',
   CANDIDATE_INTERVIEW = 'Candidate Interview',
   RETROSPECTIVE = 'Retrospective',
-  STAND_UP = 'Stand Up'
+  STAND_UP = 'Stand Up',
+  CUSTOM = 'Custom'
+}
+
+export interface CustomSummaryProfile {
+  id: string;
+  name: string;
+  description: string;
+  systemPrompt: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Attendee {
@@ -43,6 +53,7 @@ export interface MeetingData {
   transcript: string;
   summaryContent: string;
   actionItems: ActionItem[];
-  currentType: MeetingType;
+  currentType: MeetingType | string;
   videoUrl?: string;
+  customProfileId?: string;
 }

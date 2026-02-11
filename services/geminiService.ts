@@ -1,6 +1,7 @@
 
 import { GoogleGenAI } from "@google/genai";
 import { MeetingType } from "../types";
+import { MEETING_TYPES_CONFIG } from "../constants";
 
 /// <reference types="vite/client" />
 
@@ -9,20 +10,29 @@ const ai = new GoogleGenAI({ apiKey });
 
 export async function generateMeetingSummary(
   transcript: string,
-  type: MeetingType,
+  type: MeetingType | string,
   meetingDate?: string,
-  attendeeNames?: string[]
+  attendeeNames?: string[],
+  customSystemPrompt?: string
 ): Promise<{ content: string, actionItems: { text: string; assignee: string }[] }> {
   const attendeeList = attendeeNames && attendeeNames.length > 0
     ? attendeeNames.join(', ')
     : 'Not specified';
 
+  // Get the system prompt from config or use custom one
+  const config = MEETING_TYPES_CONFIG[type as MeetingType];
+  const frameworkInstruction = customSystemPrompt || config?.systemPrompt || 'Provide a clear, structured summary of the meeting.';
+  const displayType = customSystemPrompt ? type : type;
+
   const prompt = `
-    You are an expert meeting analyst for StokeMeet. Based on the transcript provided, generate a clean, structured meeting summary using the following framework: **${type}**.
+    You are an expert meeting analyst for StokeMeet. Based on the transcript provided, generate a clean, structured meeting summary.
+    
+    Framework Instructions: ${frameworkInstruction}
     
     Meeting Metadata:
     - Date: ${meetingDate || 'Not specified'}
     - Attendees: ${attendeeList}
+    - Summary Type: ${displayType}
     
     Transcript:
     """
@@ -30,7 +40,7 @@ export async function generateMeetingSummary(
     """
     
     Instructions:
-    1. Structure the output EXACTLY as shown below.
+    1. Apply the framework instructions above to guide your analysis and summary structure.
     2. Use the provided date and attendee names - DO NOT try to infer them from the transcript.
     3. When assigning action items in the "Next Steps" section, ONLY use names from the attendee list provided above.
     4. Extract specific details, numbers, and decisions from the transcript.
@@ -39,7 +49,7 @@ export async function generateMeetingSummary(
     7. Tone: Professional, concise, and modern.
     
     Output Format (Markdown):
-    # ${type} Summary
+    # ${displayType} Summary
     
     > **Executive Summary:** [A 2-3 sentence high-level overview of the meeting's core value and decisions. Make this punchy and useful.]
     
