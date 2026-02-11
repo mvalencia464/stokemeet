@@ -1,0 +1,8 @@
+{
+  "name": "InsightStream - AI Meeting Intelligence",
+  "description": "A Fathom-inspired interface for generating intelligent meeting summaries, action items, and insights using Gemini AI across various professional frameworks.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
