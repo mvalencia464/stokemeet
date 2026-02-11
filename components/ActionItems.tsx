@@ -61,7 +61,8 @@ export const ActionItems: React.FC<ActionItemsProps> = ({ items, onToggle, onCop
                 </p>
                 <div className="flex items-center gap-2 mt-1">
                   <span className="text-[10px] text-[#8b949e] flex items-center gap-1">
-                    👤 {item.assignee}
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                    {item.assignee}
                   </span>
                 </div>
               </div>
