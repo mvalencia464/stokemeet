@@ -282,8 +282,8 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
                 className="flex items-center gap-2 bg-[#ccff00]/10 border border-[#ccff00]/30 rounded-lg px-3 py-1.5 text-[#ccff00] hover:bg-[#ccff00]/20 transition-colors cursor-pointer"
                 title="Copy Fathom share link"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C9.017 13.742 9.5 14 10 14h4c.5 0 .983-.258 1.316-.658m-9.879-12.89a1 1 0 111.414-1.414m0 0L4 3m1.414-1.414L1 4m14.142-1.414a1 1 0 111.414 1.414m0 0l2.828 2.828m-2.828-2.828L18 1M9 5h6M9 9h6" />
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.04.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z" />
                 </svg>
                 <span className="text-sm font-medium">Share</span>
               </button>
