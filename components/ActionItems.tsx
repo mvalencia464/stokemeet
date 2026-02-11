@@ -5,23 +5,16 @@ import { ActionItem } from '../types';
 interface ActionItemsProps {
   items: ActionItem[];
   onToggle: (id: string) => void;
-  onCopyFor?: () => void;
   onFollowUpEmail?: () => void;
   isGeneratingEmail?: boolean;
 }
 
-export const ActionItems: React.FC<ActionItemsProps> = ({ items, onToggle, onCopyFor, onFollowUpEmail, isGeneratingEmail }) => {
+export const ActionItems: React.FC<ActionItemsProps> = ({ items, onToggle, onFollowUpEmail, isGeneratingEmail }) => {
   return (
     <div className="p-4">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-xs font-bold text-[#8b949e] uppercase tracking-wider">ACTION ITEMS</h3>
         <div className="flex gap-2">
-          <button
-            onClick={onCopyFor}
-            className="text-[10px] bg-[#161b22] px-2 py-1 border border-[#30363d] rounded text-[#8b949e] hover:text-[#e6edf3]"
-          >
-            Copy for...
-          </button>
           <button
             onClick={onFollowUpEmail}
             disabled={isGeneratingEmail}

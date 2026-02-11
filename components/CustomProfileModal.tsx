@@ -4,7 +4,7 @@ import { CustomSummaryProfile } from '../types';
 interface CustomProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (profile: Omit<CustomSummaryProfile, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  onSave: (profile: Omit<CustomSummaryProfile, 'id' | 'createdAt' | 'updatedAt'>, id?: string) => void;
   profile?: CustomSummaryProfile;
 }
 
@@ -32,7 +32,7 @@ export const CustomProfileModal: React.FC<CustomProfileModalProps> = ({
         name: name.trim(),
         description: description.trim(),
         systemPrompt: systemPrompt.trim()
-      });
+      }, profile?.id);
       setName('');
       setDescription('');
       setSystemPrompt('');

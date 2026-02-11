@@ -30,6 +30,7 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
   // Custom Profiles State
   const [customProfiles, setCustomProfiles] = useState<CustomSummaryProfile[]>([]);
   const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
+  const [editingProfile, setEditingProfile] = useState<CustomSummaryProfile | undefined>();
   const [defaultProfileId, setDefaultProfileId] = useState<string>('');
 
   // Ask StokeMeet AI State
@@ -253,6 +254,40 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
     setDefaultProfileId(id);
   };
 
+  const handleEditProfile = (profile: CustomSummaryProfile) => {
+    setEditingProfile(profile);
+    setIsCustomModalOpen(true);
+  };
+
+  const handleDeleteProfile = (id: string) => {
+    customProfileService.deleteProfile(id);
+    setCustomProfiles(customProfiles.filter(p => p.id !== id));
+    
+    // If deleted profile was selected, switch to default
+    if (meetingData.currentType === id) {
+      const defaultId = customProfileService.getDefaultProfileId();
+      handleTypeChange(defaultId);
+    }
+  };
+
+  const handleSaveProfile = (profile: Omit<CustomSummaryProfile, 'id' | 'createdAt' | 'updatedAt'>, id?: string) => {
+    if (id && editingProfile) {
+      // Update existing profile
+      const updated = customProfileService.updateProfile(id, profile);
+      if (updated) {
+        setCustomProfiles(customProfiles.map(p => p.id === id ? updated : p));
+      }
+      setEditingProfile(undefined);
+    } else {
+      // Create new profile
+      const saved = customProfileService.saveProfile(profile);
+      setCustomProfiles([...customProfiles, saved]);
+      // Automatically switch to the new profile
+      handleTypeChange(saved.id);
+    }
+    setIsCustomModalOpen(false);
+  };
+
   const toggleActionItem = (id: string) => {
     setMeetingData(prev => ({
       ...prev,
@@ -284,13 +319,6 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-  };
-
-  const handleCopyActionItems = () => {
-    const actionItemsText = meetingData.actionItems
-      .map(item => `- ${item.assignee}: ${item.text}`)
-      .join('\n');
-    copyToClipboard(actionItemsText);
   };
 
   const handleGenerateFollowUpEmail = async () => {
@@ -384,7 +412,12 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
                     selectedType={meetingData.currentType}
                     onTypeChange={handleTypeChange}
                     onCopy={() => copyToClipboard(meetingData.summaryContent)}
-                    onAddProfile={() => setIsCustomModalOpen(true)}
+                    onAddProfile={() => {
+                      setEditingProfile(undefined);
+                      setIsCustomModalOpen(true);
+                    }}
+                    onEditProfile={handleEditProfile}
+                    onDeleteProfile={handleDeleteProfile}
                     customProfiles={customProfiles}
                     defaultProfileId={defaultProfileId}
                     onSetDefault={handleSetDefaultProfile}
@@ -532,7 +565,6 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
           <ActionItems
             items={meetingData.actionItems}
             onToggle={toggleActionItem}
-            onCopyFor={handleCopyActionItems}
             onFollowUpEmail={handleGenerateFollowUpEmail}
             isGeneratingEmail={isGeneratingEmail}
           />
@@ -545,14 +577,12 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
 
       <CustomProfileModal
         isOpen={isCustomModalOpen}
-        onClose={() => setIsCustomModalOpen(false)}
-        onSave={(profile) => {
-          const saved = customProfileService.saveProfile(profile);
-          setCustomProfiles([...customProfiles, saved]);
+        onClose={() => {
           setIsCustomModalOpen(false);
-          // Automatically switch to the new profile
-          handleTypeChange(saved.id);
+          setEditingProfile(undefined);
         }}
+        onSave={handleSaveProfile}
+        profile={editingProfile}
       />
     </div>
   );
