@@ -9,6 +9,7 @@ import { MeetingType, MeetingData, ActionItem, CustomSummaryProfile } from '../t
 import { generateMeetingSummary, askMeetingQuestion, generateFollowUpEmail } from '../services/geminiService';
 import { getFathomData } from '../services/fathomService';
 import { customProfileService } from '../services/customProfileService';
+import { useAuth } from '../contexts/AuthContext';
 import { CustomProfileModal } from './CustomProfileModal';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -19,6 +20,7 @@ interface MeetingDetailProps {
 }
 
 export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBack }) => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'summary' | 'transcript' | 'ask'>('summary');
   const [loading, setLoading] = useState(false);
   const [meetingData, setMeetingData] = useState<MeetingData>(initialData);
@@ -63,8 +65,14 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
       if (!meetingData.summaryContent && meetingData.transcript) {
         setLoading(true);
         try {
-          const { loadSummary, saveSummary } = await import('../services/storageService');
-          const cached = loadSummary(meetingData.id, meetingData.currentType);
+          const { loadSummary, saveSummary, loadRemoteSummary, saveRemoteSummary } = await import('../services/storageService');
+          
+          let cached = null;
+          if (user?.id) {
+            cached = await loadRemoteSummary(user.id, meetingData.id, meetingData.currentType);
+          } else {
+            cached = loadSummary(meetingData.id, meetingData.currentType);
+          }
 
           if (cached) {
             // Use cached summary
@@ -100,12 +108,18 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
               attendeeNames
             );
 
-            // Save to cache
-            saveSummary(meetingData.id, meetingData.currentType, {
+            // Save to cache (remote or local)
+            const summaryData = {
               content: result.content,
               actionItems: result.actionItems,
               timestamp: Date.now()
-            });
+            };
+
+            if (user?.id) {
+              await saveRemoteSummary(user.id, meetingData.id, meetingData.currentType, summaryData);
+            } else {
+              saveSummary(meetingData.id, meetingData.currentType, summaryData);
+            }
 
             const newActions: ActionItem[] = result.actionItems.map((item, i) => ({
               id: `gen-${Date.now()}-${i}`,
@@ -132,7 +146,7 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
       }
     }
     generateInitialSummary();
-  }, [meetingData.id]); // Only run once when meeting ID changes
+  }, [meetingData.id, user?.id]); // Run when meeting ID or user ID changes
 
   const handleTypeChange = async (newType: MeetingType | string) => {
     setLoading(true);
@@ -142,9 +156,15 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
       // Check if it's a custom profile
       const customProfile = customProfiles.find(p => p.id === newType);
 
-      // Check cache first
-      const { loadSummary, saveSummary } = await import('../services/storageService');
-      const cached = loadSummary(meetingData.id, newType);
+      // Check cache first (remote or local)
+      const { loadSummary, saveSummary, loadRemoteSummary, saveRemoteSummary } = await import('../services/storageService');
+      
+      let cached = null;
+      if (user?.id) {
+        cached = await loadRemoteSummary(user.id, meetingData.id, newType);
+      } else {
+        cached = loadSummary(meetingData.id, newType);
+      }
 
       if (cached) {
         // Use cached summary
@@ -185,12 +205,18 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
         customProfile?.systemPrompt
       );
 
-      // Save to cache
-      saveSummary(meetingData.id, newType, {
+      // Save to cache (remote or local)
+      const summaryData = {
         content: result.content,
         actionItems: result.actionItems,
         timestamp: Date.now()
-      });
+      };
+
+      if (user?.id) {
+        await saveRemoteSummary(user.id, meetingData.id, newType, summaryData);
+      } else {
+        saveSummary(meetingData.id, newType, summaryData);
+      }
 
       const newActions: ActionItem[] = result.actionItems.map((item, i) => ({
         id: `gen-${Date.now()}-${i}`,

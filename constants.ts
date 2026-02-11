@@ -26,22 +26,22 @@ export const MEETING_TYPES_CONFIG: Record<MeetingType, MeetingTypeConfig> = {
   [MeetingType.SALES_SANDLER]: {
     category: 'Sales',
     description: 'Notes based on Sandler Selling System',
-    systemPrompt: 'Analyze the call using the Sandler Selling System. Specifically identify: 1. Pain (The emotional/business reason for change), 2. Budget (Ability and willingness to pay), and 3. Decision (Who, how, and when the decision is made).'
+    systemPrompt: 'Strictly follow the Sandler Selling System framework. Analyze the call and specifically identify: 1. Pain (The emotional/business reason for change), 2. Budget (Ability and willingness to pay), and 3. Decision (Who, how, and when the decision is made).'
   },
   [MeetingType.SALES_SPICED]: {
     category: 'Sales',
     description: 'Notes based on the SPICED sales methodology by Winning by Design',
-    systemPrompt: 'Summarize using the SPICED framework: Situation (Context), Pain (The problem), Impact (Consequences of the pain), Critical Event (The deadline), and Decision Criteria.'
+    systemPrompt: 'Strictly follow the SPICED framework. Summarize using these exact categories: Situation (Context), Pain (The problem), Impact (Consequences of the pain), Critical Event (The deadline), and Decision Criteria.'
   },
   [MeetingType.SALES_MEDDPICC]: {
     category: 'Sales',
     description: 'Notes based on the MEDDPICC sales methodology',
-    systemPrompt: 'Extract details for: Metrics (Economic impact), Economic Buyer, Decision Criteria, Decision Process, Paper Process, Identified Pain, Champions, and Competition.'
+    systemPrompt: 'Strictly follow the MEDDPICC framework. Extract details for: Metrics (Economic impact), Economic Buyer, Decision Criteria, Decision Process, Paper Process, Identified Pain, Champions, and Competition.'
   },
   [MeetingType.SALES_BANT]: {
     category: 'Sales',
     description: 'Notes based on the BANT sales methodology',
-    systemPrompt: 'Identify the four pillars of BANT: Budget (Is there a budget?), Authority (Who has the final say?), Need (What is the core problem?), and Timeline (When do they need a solution?).'
+    systemPrompt: 'Strictly follow the BANT framework. Identify the four pillars: Budget (Is there a budget?), Authority (Who has the final say?), Need (What is the core problem?), and Timeline (When do they need a solution?).'
   },
   [MeetingType.QA]: {
     category: 'Sales',
@@ -61,7 +61,7 @@ export const MEETING_TYPES_CONFIG: Record<MeetingType, MeetingTypeConfig> = {
   [MeetingType.CUSTOMER_SUCCESS_REACH]: {
     category: 'Customer Success',
     description: 'Notes based on REACH™ expansion framework by HelloCCO',
-    systemPrompt: 'Summarize using the REACH™ framework: Retention signals, Expansion opportunities, Adoption levels, Community involvement, and Health score indicators.'
+    systemPrompt: 'Strictly follow the REACH™ framework. Summarize using these exact categories: Retention signals, Expansion opportunities, Adoption levels, Community involvement, and Health score indicators.'
   },
   [MeetingType.ONE_ON_ONE]: {
     category: 'Internal & Operations',
