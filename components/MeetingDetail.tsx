@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Header } from './Header';
 import { VideoPlayer } from './VideoPlayer';
@@ -7,7 +6,7 @@ import { SummarySelector } from './SummarySelector';
 import { Attendees } from './Attendees';
 import { ActionItems } from './ActionItems';
 import { MeetingType, MeetingData, ActionItem } from '../types';
-import { generateMeetingSummary } from '../services/geminiService';
+import { generateMeetingSummary, askMeetingQuestion } from '../services/geminiService';
 import { getFathomData } from '../services/fathomService';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -23,6 +22,11 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
   const [meetingData, setMeetingData] = useState<MeetingData>(initialData);
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
   const [embedHtml, setEmbedHtml] = useState<string | null>(null);
+
+  // Ask StokeMeet AI State
+  const [question, setQuestion] = useState('');
+  const [answer, setAnswer] = useState<string | null>(null);
+  const [asking, setAsking] = useState(false);
 
   React.useEffect(() => {
     async function loadData() {
@@ -74,6 +78,30 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
     }));
   };
 
+  const handleAskQuestion = async () => {
+    if (!question.trim()) return;
+    setAsking(true);
+    setAnswer(null);
+    try {
+      const result = await askMeetingQuestion(meetingData.transcript, question);
+      setAnswer(result);
+    } catch (e) {
+      setAnswer("Sorry, I couldn't get an answer right now.");
+    } finally {
+      setAsking(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleAskQuestion();
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-[#0d1117]">
       <div className="flex items-center bg-[#0d1117] border-b border-[#30363d] sticky top-0 z-50">
@@ -85,17 +113,11 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
           <span className="text-sm font-bold">Back</span>
         </button>
         <div className="flex-1">
-          {/* We override the sticky/border of Header by containing it or just accept it. 
-                 Since Header has sticky, we need to ensure this container handles it.
-                 Actually, simpler to just have the back button part of the header row. */}
           <div className="flex items-center justify-between p-4 bg-[#0d1117]">
             <div className="flex flex-col">
               <h1 className="text-xl font-semibold text-[#e6edf3]">{meetingData.title}</h1>
               <p className="text-sm text-[#8b949e]">{meetingData.date}</p>
             </div>
-            {/* Replicating Header right side or importing it if we could pass left content. 
-                    For now, I'll just manually render the header content here to ensure perfect alignment with the back button 
-                    and avoid double borders/sticky issues. This is cleaner than fighting CSS. */}
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 bg-[#161b22] border border-[#30363d] rounded-lg px-3 py-1.5 cursor-pointer hover:bg-[#21262d]">
                 <span className="text-blue-500">🔗</span>
@@ -120,14 +142,17 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
                   <SummarySelector
                     selectedType={meetingData.currentType}
                     onTypeChange={handleTypeChange}
-                    onCopy={() => {
-                      if (meetingData.summaryContent) {
-                        navigator.clipboard.writeText(meetingData.summaryContent);
-                      }
-                    }}
+                    onCopy={() => copyToClipboard(meetingData.summaryContent)}
                   />
 
-                  <div className="p-8 prose prose-invert max-w-none">
+                  <div className="p-8 prose prose-invert max-w-none relative group/summary">
+                    <button
+                      onClick={() => copyToClipboard(meetingData.summaryContent)}
+                      className="absolute top-4 right-4 opacity-0 group-hover/summary:opacity-100 transition-opacity bg-[#21262d] border border-[#30363d] text-[#8b949e] hover:text-[#e6edf3] text-xs px-2 py-1 rounded"
+                    >
+                      Copy Summary
+                    </button>
+
                     {loading ? (
                       <div className="flex flex-col items-center justify-center py-20 space-y-4">
                         <div className="w-10 h-10 border-4 border-[#0070f3] border-t-transparent rounded-full animate-spin"></div>
@@ -135,14 +160,21 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
                       </div>
                     ) : (
                       <div className="summary-content">
-                        {/* Summary title is now part of the markdown content */}
                         <div className="text-[#c9d1d9] leading-relaxed space-y-4">
                           <ReactMarkdown
                             remarkPlugins={[remarkGfm]}
                             components={{
                               h1: ({ node, ...props }) => <h1 className="text-2xl font-bold mt-8 mb-4 text-[#e6edf3]" {...props} />,
-                              h2: ({ node, ...props }) => <h2 className="text-xl font-bold mt-6 mb-3 text-[#e6edf3]" {...props} />,
-                              h3: ({ node, ...props }) => <h3 className="text-lg font-semibold mt-6 mb-2 text-[#e6edf3] border-b border-[#30363d] pb-1" {...props} />,
+                              h2: ({ node, ...props }) => (
+                                <div className="group/section relative mt-8 mb-3 pb-2 border-b border-[#30363d]">
+                                  <h2 className="text-xl font-bold text-[#e6edf3]" {...props} />
+                                </div>
+                              ),
+                              h3: ({ node, ...props }) => (
+                                <div className="group/subsection relative mt-6 mb-2">
+                                  <h3 className="text-lg font-semibold text-[#e6edf3]" {...props} />
+                                </div>
+                              ),
                               ul: ({ node, ...props }) => <ul className="list-disc ml-6 space-y-1" {...props} />,
                               li: ({ node, ...props }) => <li className="text-sm" {...props} />,
                               p: ({ node, ...props }) => <p className="text-sm mb-4" {...props} />,
@@ -163,6 +195,12 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
                   <div className="flex items-center justify-between mb-8">
                     <h2 className="text-xl font-bold">Transcript</h2>
                     <div className="flex gap-2">
+                      <button
+                        onClick={() => copyToClipboard(meetingData.transcript)}
+                        className="text-xs bg-[#21262d] border border-[#30363d] text-[#8b949e] hover:text-[#e6edf3] px-2 py-1 rounded"
+                      >
+                        Copy Full Transcript
+                      </button>
                       <input type="text" placeholder="Search transcript..." className="bg-[#0d1117] border border-[#30363d] rounded px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-[#0070f3]" />
                     </div>
                   </div>
@@ -182,22 +220,46 @@ export const MeetingDetail: React.FC<MeetingDetailProps> = ({ initialData, onBac
               )}
 
               {activeTab === 'ask' && (
-                <div className="p-8 h-full flex flex-col items-center justify-center text-center space-y-4">
+                <div className="p-8 h-full flex flex-col items-center justify-center text-center space-y-6">
                   <div className="w-16 h-16 bg-[#0070f3]/10 rounded-full flex items-center justify-center text-[#0070f3] text-2xl">
                     ✨
                   </div>
                   <h3 className="text-xl font-bold">Ask StokeMeet AI about this meeting</h3>
                   <p className="text-[#8b949e] max-w-sm">Get answers to specific questions about what was discussed, decisions made, or upcoming deadlines.</p>
-                  <div className="w-full max-w-lg relative mt-8">
+
+                  <div className="w-full max-w-lg relative mt-4">
                     <input
                       type="text"
+                      value={question}
+                      onChange={(e) => setQuestion(e.target.value)}
+                      onKeyDown={handleKeyDown}
                       placeholder="What was the decision on the winter promo?"
                       className="w-full bg-[#0d1117] border border-[#30363d] rounded-xl py-4 pl-6 pr-16 text-sm focus:outline-none focus:ring-2 focus:ring-[#0070f3]"
+                      disabled={asking}
                     />
-                    <button className="absolute right-3 top-1/2 -translate-y-1/2 bg-[#0070f3] p-2 rounded-lg text-white">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    <button
+                      onClick={handleAskQuestion}
+                      disabled={asking || !question.trim()}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 bg-[#0070f3] p-2 rounded-lg text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {asking ? (
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                      )}
                     </button>
                   </div>
+
+                  {answer && (
+                    <div className="w-full max-w-lg mt-6 bg-[#161b22] border border-[#30363d] rounded-xl p-6 text-left">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs font-bold text-[#0070f3] uppercase tracking-wider">StokeMeet AI</span>
+                      </div>
+                      <ReactMarkdown className="text-sm text-[#e6edf3] leading-relaxed prose prose-invert">
+                        {answer}
+                      </ReactMarkdown>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
